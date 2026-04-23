@@ -1,0 +1,92 @@
+2026-04-19 21:41:03.161 | INFO     | __main__:main:94 - ============================================================
+2026-04-19 21:41:03.161 | INFO     | __main__:main:95 - Smart Farming — Crop Price Prediction
+2026-04-19 21:41:03.161 | INFO     | __main__:main:96 - Crop: sugarcane | State: Punjab
+2026-04-19 21:41:03.161 | INFO     | __main__:main:97 - Period: 2021-04-20 → 2026-04-19
+2026-04-19 21:41:03.161 | INFO     | __main__:main:98 - ============================================================
+2026-04-19 21:41:03.161 | INFO     | __main__:main:101 - Step 1/4: Fetching data...
+2026-04-19 21:41:03.161 | WARNING  | fetcher:fetch:65 - No API keys found — using synthetic data generator
+2026-04-19 21:41:03.162 | INFO     | fetcher:_generate_synthetic:190 - Generated 1826 synthetic rows for sugarcane in Punjab
+2026-04-19 21:41:03.162 | WARNING  | fetcher:fetch:228 - No OpenWeather key — using climate normals
+2026-04-19 21:41:03.175 | INFO     | __main__:main:108 - Price rows: 1826 | Weather rows: 1826
+2026-04-19 21:41:03.175 | INFO     | __main__:main:111 - Step 2/4: Preprocessing...
+2026-04-19 21:41:03.179 | INFO     | preprocessor:merge_datasets:69 - Merged dataset: 1796 rows, 24 columns
+2026-04-19 21:41:03.184 | INFO     | preprocessor:save_scalers:99 - Scalers saved → models/scalers/scalers_sugarcane.pkl
+2026-04-19 21:41:03.190 | INFO     | preprocessor:make_dataloaders:181 - Sequences → train: 1280, val: 256, test: 171
+2026-04-19 21:41:03.190 | INFO     | __main__:main:118 - Step 3/4: Training LSTM...
+2026-04-19 21:41:03.205 | INFO     | lstm_model:get_device:113 - Using Apple MPS
+2026-04-19 21:41:03.211 | INFO     | lstm_model:__init__:57 - CropPriceLSTM | features=12 | hidden=128 | layers=3 | horizon=30d | params=347,358
+2026-04-19 21:41:03.219 | INFO     | lstm_model:get_device:113 - Using Apple MPS
+2026-04-19 21:41:03.614 | INFO     | trainer:train:122 - Training started: 100 epochs | crop=sugarcane
+2026-04-19 21:41:03.614 | INFO     | trainer:train:123 - ------------------------------------------------------------
+2026-04-19 21:41:04.241 | INFO     | trainer:train:141 - Epoch 001/100 | train_loss=0.1206 | val_loss=0.1154 | MAE=0.4235 | MAPE=43.12% | lr=1.00e-03 | 1s
+2026-04-19 21:41:04.258 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:04.698 | INFO     | trainer:train:141 - Epoch 002/100 | train_loss=0.0689 | val_loss=0.1237 | MAE=0.4544 | MAPE=46.31% | lr=1.00e-03 | 1s
+2026-04-19 21:41:05.109 | INFO     | trainer:train:141 - Epoch 003/100 | train_loss=0.0562 | val_loss=0.1002 | MAE=0.4122 | MAPE=41.71% | lr=1.00e-03 | 1s
+2026-04-19 21:41:05.127 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:05.543 | INFO     | trainer:train:141 - Epoch 004/100 | train_loss=0.0542 | val_loss=0.1006 | MAE=0.4128 | MAPE=41.80% | lr=1.00e-03 | 2s
+2026-04-19 21:41:05.955 | INFO     | trainer:train:141 - Epoch 005/100 | train_loss=0.0496 | val_loss=0.0986 | MAE=0.4121 | MAPE=41.68% | lr=1.00e-03 | 2s
+2026-04-19 21:41:05.970 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:06.386 | INFO     | trainer:train:141 - Epoch 006/100 | train_loss=0.0492 | val_loss=0.0955 | MAE=0.4052 | MAPE=40.93% | lr=1.00e-03 | 3s
+2026-04-19 21:41:06.401 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:06.837 | INFO     | trainer:train:141 - Epoch 007/100 | train_loss=0.0475 | val_loss=0.0926 | MAE=0.3979 | MAPE=40.19% | lr=1.00e-03 | 3s
+2026-04-19 21:41:06.851 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:07.281 | INFO     | trainer:train:141 - Epoch 008/100 | train_loss=0.0477 | val_loss=0.0928 | MAE=0.3985 | MAPE=40.22% | lr=1.00e-03 | 4s
+2026-04-19 21:41:07.687 | INFO     | trainer:train:141 - Epoch 009/100 | train_loss=0.0465 | val_loss=0.0910 | MAE=0.3931 | MAPE=39.65% | lr=1.00e-03 | 4s
+2026-04-19 21:41:07.701 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:08.110 | INFO     | trainer:train:141 - Epoch 010/100 | train_loss=0.0452 | val_loss=0.0926 | MAE=0.3986 | MAPE=40.24% | lr=1.00e-03 | 4s
+2026-04-19 21:41:08.513 | INFO     | trainer:train:141 - Epoch 011/100 | train_loss=0.0441 | val_loss=0.0906 | MAE=0.3935 | MAPE=39.70% | lr=1.00e-03 | 5s
+2026-04-19 21:41:08.527 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:08.933 | INFO     | trainer:train:141 - Epoch 012/100 | train_loss=0.0445 | val_loss=0.0911 | MAE=0.3943 | MAPE=39.75% | lr=1.00e-03 | 5s
+2026-04-19 21:41:09.340 | INFO     | trainer:train:141 - Epoch 013/100 | train_loss=0.0433 | val_loss=0.0887 | MAE=0.3897 | MAPE=39.36% | lr=1.00e-03 | 6s
+2026-04-19 21:41:09.355 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:09.775 | INFO     | trainer:train:141 - Epoch 014/100 | train_loss=0.0423 | val_loss=0.0865 | MAE=0.3803 | MAPE=38.24% | lr=1.00e-03 | 6s
+2026-04-19 21:41:09.789 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:10.215 | INFO     | trainer:train:141 - Epoch 015/100 | train_loss=0.0447 | val_loss=0.0873 | MAE=0.3828 | MAPE=38.50% | lr=1.00e-03 | 7s
+2026-04-19 21:41:10.637 | INFO     | trainer:train:141 - Epoch 016/100 | train_loss=0.0450 | val_loss=0.0863 | MAE=0.3791 | MAPE=38.10% | lr=1.00e-03 | 7s
+2026-04-19 21:41:10.652 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:11.062 | INFO     | trainer:train:141 - Epoch 017/100 | train_loss=0.0432 | val_loss=0.0876 | MAE=0.3840 | MAPE=38.64% | lr=1.00e-03 | 7s
+2026-04-19 21:41:11.462 | INFO     | trainer:train:141 - Epoch 018/100 | train_loss=0.0419 | val_loss=0.0844 | MAE=0.3736 | MAPE=37.51% | lr=1.00e-03 | 8s
+2026-04-19 21:41:11.475 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:11.884 | INFO     | trainer:train:141 - Epoch 019/100 | train_loss=0.0435 | val_loss=0.0840 | MAE=0.3726 | MAPE=37.40% | lr=1.00e-03 | 8s
+2026-04-19 21:41:11.899 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:12.310 | INFO     | trainer:train:141 - Epoch 020/100 | train_loss=0.0444 | val_loss=0.0784 | MAE=0.3570 | MAPE=35.93% | lr=1.00e-03 | 9s
+2026-04-19 21:41:12.325 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:12.736 | INFO     | trainer:train:141 - Epoch 021/100 | train_loss=0.0379 | val_loss=0.0720 | MAE=0.3363 | MAPE=33.56% | lr=1.00e-03 | 9s
+2026-04-19 21:41:12.750 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:13.160 | INFO     | trainer:train:141 - Epoch 022/100 | train_loss=0.0355 | val_loss=0.0597 | MAE=0.3084 | MAPE=31.48% | lr=1.00e-03 | 10s
+2026-04-19 21:41:13.174 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:13.592 | INFO     | trainer:train:141 - Epoch 023/100 | train_loss=0.0408 | val_loss=0.0757 | MAE=0.3477 | MAPE=34.88% | lr=1.00e-03 | 10s
+2026-04-19 21:41:13.990 | INFO     | trainer:train:141 - Epoch 024/100 | train_loss=0.0424 | val_loss=0.0750 | MAE=0.3622 | MAPE=37.46% | lr=1.00e-03 | 10s
+2026-04-19 21:41:14.388 | INFO     | trainer:train:141 - Epoch 025/100 | train_loss=0.0354 | val_loss=0.0274 | MAE=0.1969 | MAPE=20.07% | lr=1.00e-03 | 11s
+2026-04-19 21:41:14.402 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:14.814 | INFO     | trainer:train:141 - Epoch 026/100 | train_loss=0.0510 | val_loss=0.1174 | MAE=0.4569 | MAPE=46.56% | lr=1.00e-03 | 11s
+2026-04-19 21:41:15.227 | INFO     | trainer:train:141 - Epoch 027/100 | train_loss=0.0467 | val_loss=0.0950 | MAE=0.4055 | MAPE=40.97% | lr=1.00e-03 | 12s
+2026-04-19 21:41:15.661 | INFO     | trainer:train:141 - Epoch 028/100 | train_loss=0.0467 | val_loss=0.0577 | MAE=0.3083 | MAPE=31.46% | lr=1.00e-03 | 12s
+2026-04-19 21:41:16.077 | INFO     | trainer:train:141 - Epoch 029/100 | train_loss=0.0482 | val_loss=0.0946 | MAE=0.4040 | MAPE=40.87% | lr=1.00e-03 | 12s
+2026-04-19 21:41:16.480 | INFO     | trainer:train:141 - Epoch 030/100 | train_loss=0.0457 | val_loss=0.0956 | MAE=0.4095 | MAPE=41.56% | lr=1.00e-03 | 13s
+2026-04-19 21:41:16.885 | INFO     | trainer:train:141 - Epoch 031/100 | train_loss=0.0420 | val_loss=0.0699 | MAE=0.3190 | MAPE=31.99% | lr=5.00e-04 | 13s
+2026-04-19 21:41:17.300 | INFO     | trainer:train:141 - Epoch 032/100 | train_loss=0.0439 | val_loss=0.1055 | MAE=0.4340 | MAPE=44.20% | lr=5.00e-04 | 14s
+2026-04-19 21:41:17.769 | INFO     | trainer:train:141 - Epoch 033/100 | train_loss=0.0408 | val_loss=0.0977 | MAE=0.4170 | MAPE=42.48% | lr=5.00e-04 | 14s
+2026-04-19 21:41:18.201 | INFO     | trainer:train:141 - Epoch 034/100 | train_loss=0.0392 | val_loss=0.0812 | MAE=0.3752 | MAPE=38.26% | lr=5.00e-04 | 15s
+2026-04-19 21:41:18.622 | INFO     | trainer:train:141 - Epoch 035/100 | train_loss=0.0350 | val_loss=0.0680 | MAE=0.3259 | MAPE=32.83% | lr=5.00e-04 | 15s
+2026-04-19 21:41:19.031 | INFO     | trainer:train:141 - Epoch 036/100 | train_loss=0.0326 | val_loss=0.0575 | MAE=0.2922 | MAPE=29.20% | lr=5.00e-04 | 15s
+2026-04-19 21:41:19.448 | INFO     | trainer:train:141 - Epoch 037/100 | train_loss=0.0358 | val_loss=0.0565 | MAE=0.2911 | MAPE=29.03% | lr=2.50e-04 | 16s
+2026-04-19 21:41:19.864 | INFO     | trainer:train:141 - Epoch 038/100 | train_loss=0.0339 | val_loss=0.0667 | MAE=0.3353 | MAPE=33.94% | lr=2.50e-04 | 16s
+2026-04-19 21:41:20.268 | INFO     | trainer:train:141 - Epoch 039/100 | train_loss=0.0294 | val_loss=0.0603 | MAE=0.3151 | MAPE=31.74% | lr=2.50e-04 | 17s
+2026-04-19 21:41:20.674 | INFO     | trainer:train:141 - Epoch 040/100 | train_loss=0.0269 | val_loss=0.0464 | MAE=0.2662 | MAPE=26.56% | lr=2.50e-04 | 17s
+2026-04-19 21:41:20.674 | INFO     | trainer:train:156 - Early stopping at epoch 40 (patience=15)
+2026-04-19 21:41:20.674 | INFO     | trainer:train:160 - Training complete in 17.1s | best val_loss=0.0274
+2026-04-19 21:41:20.675 | INFO     | __main__:main:124 - Step 4/4: Evaluating on test set...
+2026-04-19 21:41:20.692 | INFO     | trainer:_load_checkpoint:192 - Loaded best checkpoint from epoch 25
+2026-04-19 21:41:20.725 | INFO     | trainer:evaluate:174 - Test metrics: {'mae': 0.1314, 'rmse': 0.1711, 'mape': 15.9189}
+2026-04-19 21:41:20.725 | INFO     | __main__:main:126 - Final test metrics:
+2026-04-19 21:41:20.725 | INFO     | __main__:main:127 -   MAE:  0.1314
+2026-04-19 21:41:20.725 | INFO     | __main__:main:128 -   RMSE: 0.1711
+2026-04-19 21:41:20.725 | INFO     | __main__:main:129 -   MAPE: 15.92%
+2026-04-19 21:41:20.894 | INFO     | __main__:plot_training_curves:75 - Training curves saved → models/saved/training_curves_sugarcane.png
+2026-04-19 21:41:20.894 | INFO     | __main__:main:135 - ============================================================
+2026-04-19 21:41:20.894 | INFO     | __main__:main:136 - Training complete!
+2026-04-19 21:41:20.895 | INFO     | __main__:main:137 - Model saved → models/saved/best_sugarcane.pt
+2026-04-19 21:41:20.895 | INFO     | __main__:main:138 - Scalers saved → models/scalers/scalers_sugarcane.pkl
+2026-04-19 21:41:20.895 | INFO     | __main__:main:139 - ============================================================
+2026-04-19 21:41:20.895 | INFO     | __main__:main:140 - Run the API: uvicorn api.main:app --reload

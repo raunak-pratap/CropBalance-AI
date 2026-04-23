@@ -1,0 +1,61 @@
+2026-04-19 21:39:05.043 | INFO     | __main__:main:94 - ============================================================
+2026-04-19 21:39:05.043 | INFO     | __main__:main:95 - Smart Farming — Crop Price Prediction
+2026-04-19 21:39:05.043 | INFO     | __main__:main:96 - Crop: onion | State: Punjab
+2026-04-19 21:39:05.043 | INFO     | __main__:main:97 - Period: 2021-04-20 → 2026-04-19
+2026-04-19 21:39:05.043 | INFO     | __main__:main:98 - ============================================================
+2026-04-19 21:39:05.043 | INFO     | __main__:main:101 - Step 1/4: Fetching data...
+2026-04-19 21:39:05.043 | WARNING  | fetcher:fetch:65 - No API keys found — using synthetic data generator
+2026-04-19 21:39:05.044 | INFO     | fetcher:_generate_synthetic:190 - Generated 1826 synthetic rows for onion in Punjab
+2026-04-19 21:39:05.044 | WARNING  | fetcher:fetch:228 - No OpenWeather key — using climate normals
+2026-04-19 21:39:05.057 | INFO     | __main__:main:108 - Price rows: 1826 | Weather rows: 1826
+2026-04-19 21:39:05.057 | INFO     | __main__:main:111 - Step 2/4: Preprocessing...
+2026-04-19 21:39:05.061 | INFO     | preprocessor:merge_datasets:69 - Merged dataset: 1796 rows, 24 columns
+2026-04-19 21:39:05.066 | INFO     | preprocessor:save_scalers:99 - Scalers saved → models/scalers/scalers_onion.pkl
+2026-04-19 21:39:05.072 | INFO     | preprocessor:make_dataloaders:181 - Sequences → train: 1280, val: 256, test: 171
+2026-04-19 21:39:05.072 | INFO     | __main__:main:118 - Step 3/4: Training LSTM...
+2026-04-19 21:39:05.087 | INFO     | lstm_model:get_device:113 - Using Apple MPS
+2026-04-19 21:39:05.093 | INFO     | lstm_model:__init__:57 - CropPriceLSTM | features=12 | hidden=128 | layers=3 | horizon=30d | params=347,358
+2026-04-19 21:39:05.103 | INFO     | lstm_model:get_device:113 - Using Apple MPS
+2026-04-19 21:39:05.508 | INFO     | trainer:train:122 - Training started: 100 epochs | crop=onion
+2026-04-19 21:39:05.508 | INFO     | trainer:train:123 - ------------------------------------------------------------
+2026-04-19 21:39:06.191 | INFO     | trainer:train:141 - Epoch 001/100 | train_loss=0.1176 | val_loss=0.1024 | MAE=0.3913 | MAPE=39.93% | lr=1.00e-03 | 1s
+2026-04-19 21:39:06.210 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_onion.pt
+2026-04-19 21:39:06.653 | INFO     | trainer:train:141 - Epoch 002/100 | train_loss=0.0619 | val_loss=0.0939 | MAE=0.3693 | MAPE=37.57% | lr=1.00e-03 | 1s
+2026-04-19 21:39:06.668 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_onion.pt
+2026-04-19 21:39:07.070 | INFO     | trainer:train:141 - Epoch 003/100 | train_loss=0.0545 | val_loss=0.0841 | MAE=0.3671 | MAPE=37.21% | lr=1.00e-03 | 2s
+2026-04-19 21:39:07.086 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_onion.pt
+2026-04-19 21:39:07.491 | INFO     | trainer:train:141 - Epoch 004/100 | train_loss=0.0494 | val_loss=0.0716 | MAE=0.3350 | MAPE=33.78% | lr=1.00e-03 | 2s
+2026-04-19 21:39:07.506 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_onion.pt
+2026-04-19 21:39:07.922 | INFO     | trainer:train:141 - Epoch 005/100 | train_loss=0.0500 | val_loss=0.0678 | MAE=0.3202 | MAPE=32.29% | lr=1.00e-03 | 2s
+2026-04-19 21:39:07.936 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_onion.pt
+2026-04-19 21:39:08.358 | INFO     | trainer:train:141 - Epoch 006/100 | train_loss=0.0495 | val_loss=0.0741 | MAE=0.3464 | MAPE=34.98% | lr=1.00e-03 | 3s
+2026-04-19 21:39:08.768 | INFO     | trainer:train:141 - Epoch 007/100 | train_loss=0.0492 | val_loss=0.0774 | MAE=0.3552 | MAPE=35.85% | lr=1.00e-03 | 3s
+2026-04-19 21:39:09.194 | INFO     | trainer:train:141 - Epoch 008/100 | train_loss=0.0487 | val_loss=0.0794 | MAE=0.3531 | MAPE=35.76% | lr=1.00e-03 | 4s
+2026-04-19 21:39:09.629 | INFO     | trainer:train:141 - Epoch 009/100 | train_loss=0.0486 | val_loss=0.0768 | MAE=0.3456 | MAPE=34.87% | lr=1.00e-03 | 4s
+2026-04-19 21:39:10.090 | INFO     | trainer:train:141 - Epoch 010/100 | train_loss=0.0490 | val_loss=0.0802 | MAE=0.3581 | MAPE=36.14% | lr=1.00e-03 | 5s
+2026-04-19 21:39:10.536 | INFO     | trainer:train:141 - Epoch 011/100 | train_loss=0.0472 | val_loss=0.0854 | MAE=0.3776 | MAPE=38.22% | lr=5.00e-04 | 5s
+2026-04-19 21:39:10.983 | INFO     | trainer:train:141 - Epoch 012/100 | train_loss=0.0474 | val_loss=0.1074 | MAE=0.4429 | MAPE=45.21% | lr=5.00e-04 | 5s
+2026-04-19 21:39:11.411 | INFO     | trainer:train:141 - Epoch 013/100 | train_loss=0.0400 | val_loss=0.1018 | MAE=0.4289 | MAPE=43.72% | lr=5.00e-04 | 6s
+2026-04-19 21:39:11.825 | INFO     | trainer:train:141 - Epoch 014/100 | train_loss=0.0402 | val_loss=0.1051 | MAE=0.4372 | MAPE=44.60% | lr=5.00e-04 | 6s
+2026-04-19 21:39:12.235 | INFO     | trainer:train:141 - Epoch 015/100 | train_loss=0.0389 | val_loss=0.1018 | MAE=0.4285 | MAPE=43.67% | lr=5.00e-04 | 7s
+2026-04-19 21:39:12.643 | INFO     | trainer:train:141 - Epoch 016/100 | train_loss=0.0384 | val_loss=0.0925 | MAE=0.4012 | MAPE=40.80% | lr=5.00e-04 | 7s
+2026-04-19 21:39:13.067 | INFO     | trainer:train:141 - Epoch 017/100 | train_loss=0.0420 | val_loss=0.0983 | MAE=0.4193 | MAPE=42.73% | lr=2.50e-04 | 8s
+2026-04-19 21:39:13.498 | INFO     | trainer:train:141 - Epoch 018/100 | train_loss=0.0385 | val_loss=0.1046 | MAE=0.4369 | MAPE=44.67% | lr=2.50e-04 | 8s
+2026-04-19 21:39:13.917 | INFO     | trainer:train:141 - Epoch 019/100 | train_loss=0.0366 | val_loss=0.1034 | MAE=0.4336 | MAPE=44.31% | lr=2.50e-04 | 8s
+2026-04-19 21:39:14.328 | INFO     | trainer:train:141 - Epoch 020/100 | train_loss=0.0365 | val_loss=0.1044 | MAE=0.4332 | MAPE=44.20% | lr=2.50e-04 | 9s
+2026-04-19 21:39:14.328 | INFO     | trainer:train:156 - Early stopping at epoch 20 (patience=15)
+2026-04-19 21:39:14.328 | INFO     | trainer:train:160 - Training complete in 8.8s | best val_loss=0.0678
+2026-04-19 21:39:14.328 | INFO     | __main__:main:124 - Step 4/4: Evaluating on test set...
+2026-04-19 21:39:14.345 | INFO     | trainer:_load_checkpoint:192 - Loaded best checkpoint from epoch 5
+2026-04-19 21:39:14.379 | INFO     | trainer:evaluate:174 - Test metrics: {'mae': 0.3, 'rmse': 0.3503, 'mape': 30.9721}
+2026-04-19 21:39:14.380 | INFO     | __main__:main:126 - Final test metrics:
+2026-04-19 21:39:14.380 | INFO     | __main__:main:127 -   MAE:  0.3000
+2026-04-19 21:39:14.380 | INFO     | __main__:main:128 -   RMSE: 0.3503
+2026-04-19 21:39:14.380 | INFO     | __main__:main:129 -   MAPE: 30.97%
+2026-04-19 21:39:14.562 | INFO     | __main__:plot_training_curves:75 - Training curves saved → models/saved/training_curves_onion.png
+2026-04-19 21:39:14.562 | INFO     | __main__:main:135 - ============================================================
+2026-04-19 21:39:14.562 | INFO     | __main__:main:136 - Training complete!
+2026-04-19 21:39:14.562 | INFO     | __main__:main:137 - Model saved → models/saved/best_onion.pt
+2026-04-19 21:39:14.562 | INFO     | __main__:main:138 - Scalers saved → models/scalers/scalers_onion.pkl
+2026-04-19 21:39:14.562 | INFO     | __main__:main:139 - ============================================================
+2026-04-19 21:39:14.562 | INFO     | __main__:main:140 - Run the API: uvicorn api.main:app --reload

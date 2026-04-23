@@ -1,0 +1,121 @@
+2026-04-19 21:39:26.371 | INFO     | __main__:main:94 - ============================================================
+2026-04-19 21:39:26.371 | INFO     | __main__:main:95 - Smart Farming — Crop Price Prediction
+2026-04-19 21:39:26.371 | INFO     | __main__:main:96 - Crop: cotton | State: Punjab
+2026-04-19 21:39:26.371 | INFO     | __main__:main:97 - Period: 2021-04-20 → 2026-04-19
+2026-04-19 21:39:26.371 | INFO     | __main__:main:98 - ============================================================
+2026-04-19 21:39:26.371 | INFO     | __main__:main:101 - Step 1/4: Fetching data...
+2026-04-19 21:39:26.371 | WARNING  | fetcher:fetch:65 - No API keys found — using synthetic data generator
+2026-04-19 21:39:26.372 | INFO     | fetcher:_generate_synthetic:190 - Generated 1826 synthetic rows for cotton in Punjab
+2026-04-19 21:39:26.372 | WARNING  | fetcher:fetch:228 - No OpenWeather key — using climate normals
+2026-04-19 21:39:26.385 | INFO     | __main__:main:108 - Price rows: 1826 | Weather rows: 1826
+2026-04-19 21:39:26.385 | INFO     | __main__:main:111 - Step 2/4: Preprocessing...
+2026-04-19 21:39:26.389 | INFO     | preprocessor:merge_datasets:69 - Merged dataset: 1796 rows, 24 columns
+2026-04-19 21:39:26.395 | INFO     | preprocessor:save_scalers:99 - Scalers saved → models/scalers/scalers_cotton.pkl
+2026-04-19 21:39:26.400 | INFO     | preprocessor:make_dataloaders:181 - Sequences → train: 1280, val: 256, test: 171
+2026-04-19 21:39:26.401 | INFO     | __main__:main:118 - Step 3/4: Training LSTM...
+2026-04-19 21:39:26.415 | INFO     | lstm_model:get_device:113 - Using Apple MPS
+2026-04-19 21:39:26.420 | INFO     | lstm_model:__init__:57 - CropPriceLSTM | features=12 | hidden=128 | layers=3 | horizon=30d | params=347,358
+2026-04-19 21:39:26.429 | INFO     | lstm_model:get_device:113 - Using Apple MPS
+2026-04-19 21:39:26.712 | INFO     | trainer:train:122 - Training started: 100 epochs | crop=cotton
+2026-04-19 21:39:26.712 | INFO     | trainer:train:123 - ------------------------------------------------------------
+2026-04-19 21:39:27.333 | INFO     | trainer:train:141 - Epoch 001/100 | train_loss=0.1060 | val_loss=0.1213 | MAE=0.4351 | MAPE=44.59% | lr=1.00e-03 | 1s
+2026-04-19 21:39:27.440 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:27.962 | INFO     | trainer:train:141 - Epoch 002/100 | train_loss=0.0577 | val_loss=0.0929 | MAE=0.3908 | MAPE=39.78% | lr=1.00e-03 | 1s
+2026-04-19 21:39:27.977 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:28.441 | INFO     | trainer:train:141 - Epoch 003/100 | train_loss=0.0489 | val_loss=0.0772 | MAE=0.3472 | MAPE=35.22% | lr=1.00e-03 | 2s
+2026-04-19 21:39:28.455 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:28.862 | INFO     | trainer:train:141 - Epoch 004/100 | train_loss=0.0468 | val_loss=0.0739 | MAE=0.3469 | MAPE=35.09% | lr=1.00e-03 | 2s
+2026-04-19 21:39:28.876 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:29.271 | INFO     | trainer:train:141 - Epoch 005/100 | train_loss=0.0457 | val_loss=0.0660 | MAE=0.3106 | MAPE=31.35% | lr=1.00e-03 | 3s
+2026-04-19 21:39:29.286 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:29.697 | INFO     | trainer:train:141 - Epoch 006/100 | train_loss=0.0507 | val_loss=0.0772 | MAE=0.3547 | MAPE=35.81% | lr=1.00e-03 | 3s
+2026-04-19 21:39:30.111 | INFO     | trainer:train:141 - Epoch 007/100 | train_loss=0.0498 | val_loss=0.0777 | MAE=0.3603 | MAPE=36.39% | lr=1.00e-03 | 3s
+2026-04-19 21:39:30.522 | INFO     | trainer:train:141 - Epoch 008/100 | train_loss=0.0473 | val_loss=0.0782 | MAE=0.3617 | MAPE=36.64% | lr=1.00e-03 | 4s
+2026-04-19 21:39:30.911 | INFO     | trainer:train:141 - Epoch 009/100 | train_loss=0.0433 | val_loss=0.0681 | MAE=0.3241 | MAPE=32.71% | lr=1.00e-03 | 4s
+2026-04-19 21:39:31.294 | INFO     | trainer:train:141 - Epoch 010/100 | train_loss=0.0407 | val_loss=0.0765 | MAE=0.3435 | MAPE=34.91% | lr=1.00e-03 | 5s
+2026-04-19 21:39:31.694 | INFO     | trainer:train:141 - Epoch 011/100 | train_loss=0.0401 | val_loss=0.0673 | MAE=0.3221 | MAPE=32.49% | lr=5.00e-04 | 5s
+2026-04-19 21:39:32.091 | INFO     | trainer:train:141 - Epoch 012/100 | train_loss=0.0400 | val_loss=0.0659 | MAE=0.3141 | MAPE=31.78% | lr=5.00e-04 | 5s
+2026-04-19 21:39:32.104 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:32.536 | INFO     | trainer:train:141 - Epoch 013/100 | train_loss=0.0402 | val_loss=0.0658 | MAE=0.3138 | MAPE=31.72% | lr=5.00e-04 | 6s
+2026-04-19 21:39:32.549 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:32.975 | INFO     | trainer:train:141 - Epoch 014/100 | train_loss=0.0392 | val_loss=0.0655 | MAE=0.3160 | MAPE=32.01% | lr=5.00e-04 | 6s
+2026-04-19 21:39:32.987 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:33.383 | INFO     | trainer:train:141 - Epoch 015/100 | train_loss=0.0392 | val_loss=0.0659 | MAE=0.3155 | MAPE=31.97% | lr=5.00e-04 | 7s
+2026-04-19 21:39:33.772 | INFO     | trainer:train:141 - Epoch 016/100 | train_loss=0.0393 | val_loss=0.0652 | MAE=0.3161 | MAPE=32.00% | lr=5.00e-04 | 7s
+2026-04-19 21:39:33.785 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:34.191 | INFO     | trainer:train:141 - Epoch 017/100 | train_loss=0.0376 | val_loss=0.0640 | MAE=0.3162 | MAPE=32.05% | lr=5.00e-04 | 7s
+2026-04-19 21:39:34.205 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:34.625 | INFO     | trainer:train:141 - Epoch 018/100 | train_loss=0.0372 | val_loss=0.0636 | MAE=0.3150 | MAPE=31.88% | lr=5.00e-04 | 8s
+2026-04-19 21:39:34.639 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:35.044 | INFO     | trainer:train:141 - Epoch 019/100 | train_loss=0.0352 | val_loss=0.0604 | MAE=0.3078 | MAPE=31.14% | lr=5.00e-04 | 8s
+2026-04-19 21:39:35.058 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:35.480 | INFO     | trainer:train:141 - Epoch 020/100 | train_loss=0.0341 | val_loss=0.0554 | MAE=0.2876 | MAPE=28.97% | lr=5.00e-04 | 9s
+2026-04-19 21:39:35.494 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:35.906 | INFO     | trainer:train:141 - Epoch 021/100 | train_loss=0.0334 | val_loss=0.0569 | MAE=0.2975 | MAPE=29.88% | lr=5.00e-04 | 9s
+2026-04-19 21:39:36.333 | INFO     | trainer:train:141 - Epoch 022/100 | train_loss=0.0312 | val_loss=0.0392 | MAE=0.2314 | MAPE=23.40% | lr=5.00e-04 | 10s
+2026-04-19 21:39:36.346 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:36.750 | INFO     | trainer:train:141 - Epoch 023/100 | train_loss=0.0343 | val_loss=0.0522 | MAE=0.2704 | MAPE=27.10% | lr=5.00e-04 | 10s
+2026-04-19 21:39:37.207 | INFO     | trainer:train:141 - Epoch 024/100 | train_loss=0.0306 | val_loss=0.0524 | MAE=0.2859 | MAPE=28.68% | lr=5.00e-04 | 10s
+2026-04-19 21:39:37.641 | INFO     | trainer:train:141 - Epoch 025/100 | train_loss=0.0305 | val_loss=0.0509 | MAE=0.2825 | MAPE=28.18% | lr=5.00e-04 | 11s
+2026-04-19 21:39:38.094 | INFO     | trainer:train:141 - Epoch 026/100 | train_loss=0.0281 | val_loss=0.0496 | MAE=0.2798 | MAPE=27.95% | lr=5.00e-04 | 11s
+2026-04-19 21:39:38.522 | INFO     | trainer:train:141 - Epoch 027/100 | train_loss=0.0249 | val_loss=0.0425 | MAE=0.2559 | MAPE=25.43% | lr=5.00e-04 | 12s
+2026-04-19 21:39:38.947 | INFO     | trainer:train:141 - Epoch 028/100 | train_loss=0.0231 | val_loss=0.0415 | MAE=0.2540 | MAPE=25.24% | lr=2.50e-04 | 12s
+2026-04-19 21:39:39.363 | INFO     | trainer:train:141 - Epoch 029/100 | train_loss=0.0213 | val_loss=0.0453 | MAE=0.2726 | MAPE=27.31% | lr=2.50e-04 | 13s
+2026-04-19 21:39:39.774 | INFO     | trainer:train:141 - Epoch 030/100 | train_loss=0.0189 | val_loss=0.0435 | MAE=0.2664 | MAPE=26.65% | lr=2.50e-04 | 13s
+2026-04-19 21:39:40.250 | INFO     | trainer:train:141 - Epoch 031/100 | train_loss=0.0181 | val_loss=0.0369 | MAE=0.2410 | MAPE=23.94% | lr=2.50e-04 | 14s
+2026-04-19 21:39:40.267 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:40.765 | INFO     | trainer:train:141 - Epoch 032/100 | train_loss=0.0171 | val_loss=0.0321 | MAE=0.2212 | MAPE=21.87% | lr=2.50e-04 | 14s
+2026-04-19 21:39:40.785 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:41.316 | INFO     | trainer:train:141 - Epoch 033/100 | train_loss=0.0165 | val_loss=0.0287 | MAE=0.2063 | MAPE=20.33% | lr=2.50e-04 | 15s
+2026-04-19 21:39:41.329 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:41.799 | INFO     | trainer:train:141 - Epoch 034/100 | train_loss=0.0158 | val_loss=0.0253 | MAE=0.1880 | MAPE=18.39% | lr=2.50e-04 | 15s
+2026-04-19 21:39:41.812 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:42.223 | INFO     | trainer:train:141 - Epoch 035/100 | train_loss=0.0158 | val_loss=0.0230 | MAE=0.1786 | MAPE=17.50% | lr=2.50e-04 | 16s
+2026-04-19 21:39:42.237 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:42.648 | INFO     | trainer:train:141 - Epoch 036/100 | train_loss=0.0146 | val_loss=0.0221 | MAE=0.1751 | MAPE=17.16% | lr=2.50e-04 | 16s
+2026-04-19 21:39:42.662 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:43.078 | INFO     | trainer:train:141 - Epoch 037/100 | train_loss=0.0148 | val_loss=0.0243 | MAE=0.1817 | MAPE=17.87% | lr=2.50e-04 | 16s
+2026-04-19 21:39:43.484 | INFO     | trainer:train:141 - Epoch 038/100 | train_loss=0.0142 | val_loss=0.0200 | MAE=0.1620 | MAPE=15.89% | lr=2.50e-04 | 17s
+2026-04-19 21:39:43.498 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:43.955 | INFO     | trainer:train:141 - Epoch 039/100 | train_loss=0.0162 | val_loss=0.0167 | MAE=0.1498 | MAPE=14.75% | lr=2.50e-04 | 17s
+2026-04-19 21:39:43.969 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:44.493 | INFO     | trainer:train:141 - Epoch 040/100 | train_loss=0.0148 | val_loss=0.0204 | MAE=0.1691 | MAPE=16.71% | lr=2.50e-04 | 18s
+2026-04-19 21:39:44.971 | INFO     | trainer:train:141 - Epoch 041/100 | train_loss=0.0126 | val_loss=0.0190 | MAE=0.1582 | MAPE=15.51% | lr=2.50e-04 | 18s
+2026-04-19 21:39:45.457 | INFO     | trainer:train:141 - Epoch 042/100 | train_loss=0.0122 | val_loss=0.0194 | MAE=0.1635 | MAPE=16.08% | lr=2.50e-04 | 19s
+2026-04-19 21:39:45.928 | INFO     | trainer:train:141 - Epoch 043/100 | train_loss=0.0120 | val_loss=0.0179 | MAE=0.1523 | MAPE=14.86% | lr=2.50e-04 | 19s
+2026-04-19 21:39:46.537 | INFO     | trainer:train:141 - Epoch 044/100 | train_loss=0.0122 | val_loss=0.0165 | MAE=0.1439 | MAPE=14.04% | lr=2.50e-04 | 20s
+2026-04-19 21:39:46.555 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:47.067 | INFO     | trainer:train:141 - Epoch 045/100 | train_loss=0.0122 | val_loss=0.0172 | MAE=0.1473 | MAPE=14.30% | lr=2.50e-04 | 20s
+2026-04-19 21:39:47.464 | INFO     | trainer:train:141 - Epoch 046/100 | train_loss=0.0123 | val_loss=0.0154 | MAE=0.1380 | MAPE=13.49% | lr=2.50e-04 | 21s
+2026-04-19 21:39:47.478 | DEBUG    | trainer:_save_checkpoint:186 - Checkpoint saved → models/saved/best_cotton.pt
+2026-04-19 21:39:47.859 | INFO     | trainer:train:141 - Epoch 047/100 | train_loss=0.0112 | val_loss=0.0209 | MAE=0.1756 | MAPE=17.38% | lr=2.50e-04 | 21s
+2026-04-19 21:39:48.271 | INFO     | trainer:train:141 - Epoch 048/100 | train_loss=0.0102 | val_loss=0.0175 | MAE=0.1529 | MAPE=14.93% | lr=2.50e-04 | 22s
+2026-04-19 21:39:48.655 | INFO     | trainer:train:141 - Epoch 049/100 | train_loss=0.0094 | val_loss=0.0165 | MAE=0.1470 | MAPE=14.32% | lr=2.50e-04 | 22s
+2026-04-19 21:39:49.062 | INFO     | trainer:train:141 - Epoch 050/100 | train_loss=0.0113 | val_loss=0.0161 | MAE=0.1420 | MAPE=13.78% | lr=2.50e-04 | 22s
+2026-04-19 21:39:49.547 | INFO     | trainer:train:141 - Epoch 051/100 | train_loss=0.0109 | val_loss=0.0163 | MAE=0.1429 | MAPE=13.88% | lr=2.50e-04 | 23s
+2026-04-19 21:39:50.058 | INFO     | trainer:train:141 - Epoch 052/100 | train_loss=0.0116 | val_loss=0.0199 | MAE=0.1644 | MAPE=16.10% | lr=1.25e-04 | 23s
+2026-04-19 21:39:50.580 | INFO     | trainer:train:141 - Epoch 053/100 | train_loss=0.0116 | val_loss=0.0196 | MAE=0.1645 | MAPE=16.19% | lr=1.25e-04 | 24s
+2026-04-19 21:39:51.012 | INFO     | trainer:train:141 - Epoch 054/100 | train_loss=0.0105 | val_loss=0.0185 | MAE=0.1627 | MAPE=16.10% | lr=1.25e-04 | 24s
+2026-04-19 21:39:51.410 | INFO     | trainer:train:141 - Epoch 055/100 | train_loss=0.0100 | val_loss=0.0191 | MAE=0.1664 | MAPE=16.47% | lr=1.25e-04 | 25s
+2026-04-19 21:39:51.810 | INFO     | trainer:train:141 - Epoch 056/100 | train_loss=0.0095 | val_loss=0.0181 | MAE=0.1594 | MAPE=15.70% | lr=1.25e-04 | 25s
+2026-04-19 21:39:52.223 | INFO     | trainer:train:141 - Epoch 057/100 | train_loss=0.0094 | val_loss=0.0182 | MAE=0.1612 | MAPE=15.91% | lr=1.25e-04 | 26s
+2026-04-19 21:39:52.637 | INFO     | trainer:train:141 - Epoch 058/100 | train_loss=0.0099 | val_loss=0.0182 | MAE=0.1597 | MAPE=15.66% | lr=6.25e-05 | 26s
+2026-04-19 21:39:53.057 | INFO     | trainer:train:141 - Epoch 059/100 | train_loss=0.0090 | val_loss=0.0199 | MAE=0.1723 | MAPE=17.08% | lr=6.25e-05 | 26s
+2026-04-19 21:39:53.513 | INFO     | trainer:train:141 - Epoch 060/100 | train_loss=0.0090 | val_loss=0.0190 | MAE=0.1667 | MAPE=16.47% | lr=6.25e-05 | 27s
+2026-04-19 21:39:53.944 | INFO     | trainer:train:141 - Epoch 061/100 | train_loss=0.0090 | val_loss=0.0183 | MAE=0.1624 | MAPE=16.02% | lr=6.25e-05 | 27s
+2026-04-19 21:39:53.944 | INFO     | trainer:train:156 - Early stopping at epoch 61 (patience=15)
+2026-04-19 21:39:53.944 | INFO     | trainer:train:160 - Training complete in 27.2s | best val_loss=0.0154
+2026-04-19 21:39:53.945 | INFO     | __main__:main:124 - Step 4/4: Evaluating on test set...
+2026-04-19 21:39:53.968 | INFO     | trainer:_load_checkpoint:192 - Loaded best checkpoint from epoch 46
+2026-04-19 21:39:54.010 | INFO     | trainer:evaluate:174 - Test metrics: {'mae': 0.1151, 'rmse': 0.1664, 'mape': 12.5066}
+2026-04-19 21:39:54.010 | INFO     | __main__:main:126 - Final test metrics:
+2026-04-19 21:39:54.010 | INFO     | __main__:main:127 -   MAE:  0.1151
+2026-04-19 21:39:54.010 | INFO     | __main__:main:128 -   RMSE: 0.1664
+2026-04-19 21:39:54.010 | INFO     | __main__:main:129 -   MAPE: 12.51%
+2026-04-19 21:39:54.201 | INFO     | __main__:plot_training_curves:75 - Training curves saved → models/saved/training_curves_cotton.png
+2026-04-19 21:39:54.201 | INFO     | __main__:main:135 - ============================================================
+2026-04-19 21:39:54.201 | INFO     | __main__:main:136 - Training complete!
+2026-04-19 21:39:54.201 | INFO     | __main__:main:137 - Model saved → models/saved/best_cotton.pt
+2026-04-19 21:39:54.201 | INFO     | __main__:main:138 - Scalers saved → models/scalers/scalers_cotton.pkl
+2026-04-19 21:39:54.201 | INFO     | __main__:main:139 - ============================================================
+2026-04-19 21:39:54.201 | INFO     | __main__:main:140 - Run the API: uvicorn api.main:app --reload

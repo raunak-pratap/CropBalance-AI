@@ -1,0 +1,20 @@
+2026-04-19 21:31:32.597 | INFO     | __main__:main:94 - ============================================================
+2026-04-19 21:31:32.597 | INFO     | __main__:main:95 - Smart Farming — Crop Price Prediction
+2026-04-19 21:31:32.597 | INFO     | __main__:main:96 - Crop: wheat | State: Punjab
+2026-04-19 21:31:32.597 | INFO     | __main__:main:97 - Period: 2021-04-20 → 2026-04-19
+2026-04-19 21:31:32.597 | INFO     | __main__:main:98 - ============================================================
+2026-04-19 21:31:32.597 | INFO     | __main__:main:101 - Step 1/4: Fetching data...
+2026-04-19 21:31:32.597 | WARNING  | fetcher:fetch:65 - No API keys found — using synthetic data generator
+2026-04-19 21:31:32.600 | INFO     | fetcher:_generate_synthetic:190 - Generated 1826 synthetic rows for wheat in Punjab
+2026-04-19 21:31:32.600 | WARNING  | fetcher:fetch:228 - No OpenWeather key — using climate normals
+2026-04-19 21:31:32.614 | INFO     | __main__:main:108 - Price rows: 1826 | Weather rows: 1826
+2026-04-19 21:31:32.614 | INFO     | __main__:main:111 - Step 2/4: Preprocessing...
+2026-04-19 21:31:32.621 | INFO     | preprocessor:merge_datasets:69 - Merged dataset: 1796 rows, 24 columns
+2026-04-19 21:31:32.627 | INFO     | preprocessor:save_scalers:99 - Scalers saved → models/scalers/scalers_wheat.pkl
+2026-04-19 21:31:32.633 | INFO     | preprocessor:make_dataloaders:181 - Sequences → train: 1280, val: 256, test: 171
+2026-04-19 21:31:32.639 | INFO     | __main__:main:118 - Step 3/4: Training LSTM...
+2026-04-19 21:31:32.694 | INFO     | lstm_model:get_device:113 - Using Apple MPS
+2026-04-19 21:31:32.722 | INFO     | lstm_model:__init__:57 - CropPriceLSTM | features=12 | hidden=128 | layers=3 | horizon=30d | params=347,358
+2026-04-19 21:31:32.773 | INFO     | lstm_model:get_device:113 - Using Apple MPS
+2026-04-19 21:31:33.344 | INFO     | trainer:train:123 - Training started: 100 epochs | crop=wheat
+2026-04-19 21:31:33.344 | INFO     | trainer:train:124 - ------------------------------------------------------------
