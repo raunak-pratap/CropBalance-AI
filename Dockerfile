@@ -28,4 +28,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/', timeout=5)" || exit 1
 
 # Run FastAPI app with Gunicorn
-CMD ["gunicorn","app:app","-k","uvicorn.workers.UvicornWorker","-w","1","-b","0.0.0.0:8000"]
+CMD ["gunicorn","main:app","-k","uvicorn.workers.UvicornWorker","--bind","0.0.0.0:8000"]
