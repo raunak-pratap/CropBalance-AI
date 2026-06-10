@@ -100,4 +100,5 @@ coverage.xml
 *.bak
 *.tmp
 *.temp
-.cache/
+.cache/__pycache__/
+*.pyc
