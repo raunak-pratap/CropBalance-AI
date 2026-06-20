@@ -3,12 +3,11 @@ main.py — FastAPI server for CropBalanceAI
 """
 
 import os
-import json
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict
+from typing import List, Dict
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, File, UploadFile
+from fastapi import FastAPI, HTTPException, Query, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from loguru import logger
@@ -18,16 +17,20 @@ from fetcher import MandiPriceFetcher, WeatherFetcher
 from predictor import CropPredictor
 from disease.disease_predictor import DiseasePredictor
 
-# ── App setup ──────────────────────────────────
+
+# =========================================================
+# App Setup
+# =========================================================
 app = FastAPI(
-    title="CropBalanceAI — Crop Price & Disease API",
-    version="1.0.0",
-    docs_url="/docs",
+    title="CropBalanceAI",
+    version="2.0.0",
+    docs_url="/docs"
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -37,34 +40,44 @@ _predictors: Dict[str, CropPredictor] = {}
 _disease_predictor: DiseasePredictor = None
 
 
-# ── Schemas ────────────────────────────────────
+# =========================================================
+# Schemas
+# =========================================================
 class PredictRequest(BaseModel):
-    crop:         str = Field(..., example="wheat")
-    state:        str = Field(..., example="Punjab")
+    crop: str = Field(..., example="wheat")
+    state: str = Field(..., example="Punjab")
     days_history: int = Field(90, ge=60, le=365)
 
 
 class ForecastPoint(BaseModel):
-    date:      str
+    date: str
     price_inr: float
 
 
 class PredictResponse(BaseModel):
-    crop:         str
-    state:        str
-    forecast:     List[ForecastPoint]
+    crop: str
+    state: str
+    forecast: List[ForecastPoint]
     horizon_days: int
     generated_at: str
-    model_info:   dict
+    model_info: dict
 
 
 class BatchPredictRequest(BaseModel):
-    crops:        List[str]
-    state:        str
+    crops: List[str]
+    state: str
     days_history: int = 90
 
 
-# ── Helpers ────────────────────────────────────
+class ChatRequest(BaseModel):
+    message: str
+    crop: str = "wheat"
+    state: str = "Punjab"
+
+
+# =========================================================
+# Helpers
+# =========================================================
 def get_predictor(crop: str) -> CropPredictor:
     if crop not in _predictors:
         try:
@@ -72,7 +85,7 @@ def get_predictor(crop: str) -> CropPredictor:
         except FileNotFoundError:
             raise HTTPException(
                 status_code=404,
-                detail=f"No trained model for '{crop}'. Run: python train.py --crop {crop}",
+                detail=f"No trained model found for {crop}"
             )
     return _predictors[crop]
 
@@ -84,167 +97,268 @@ def get_disease_predictor() -> DiseasePredictor:
     return _disease_predictor
 
 
-# ── Routes ─────────────────────────────────────
+# =========================================================
+# Root
+# =========================================================
 @app.get("/", tags=["health"])
 def root():
-    return {"service": "CropBalanceAI", "version": "1.0.0", "status": "running"}
+    return {
+        "service": "CropBalanceAI",
+        "version": "2.0.0",
+        "status": "running"
+    }
 
 
+# =========================================================
+# Crop List
+# =========================================================
 @app.get("/crops", tags=["info"])
 def list_crops():
-    from config import CROP_DISPLAY_NAMES
     return {
-        "crops": [
-            {
-                "id":      crop,
-                "en":      CROP_DISPLAY_NAMES.get(crop, {}).get("en", crop.title()),
-                "hi":      CROP_DISPLAY_NAMES.get(crop, {}).get("hi", ""),
-                "trained": os.path.exists(os.path.join(PATH_CONFIG.models_dir, f"best_{crop}.pt")),
-            }
-            for crop in SUPPORTED_CROPS
-        ]
+        "supported_crops": SUPPORTED_CROPS
     }
 
 
+# =========================================================
+# Price Prediction
+# =========================================================
 @app.post("/predict", response_model=PredictResponse, tags=["prediction"])
 def predict_price(req: PredictRequest):
-    crop  = req.crop.lower()
-    state = req.state
+    crop = req.crop.lower()
 
     if crop not in SUPPORTED_CROPS:
-        raise HTTPException(status_code=400, detail=f"Unsupported crop '{crop}'")
+        raise HTTPException(400, f"Unsupported crop: {crop}")
 
-    cache_key = f"predict:{crop}:{state}"
-    cached    = _cache.get(cache_key)
-    if cached and (datetime.utcnow() - datetime.fromisoformat(cached["generated_at"])).seconds < API_CONFIG.cache_ttl_seconds:
-        return cached
-
-    end_date   = datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.now() - timedelta(days=req.days_history)).strftime("%Y-%m-%d")
+    end_date = datetime.now().strftime("%Y-%m-%d")
+    start_date = (
+        datetime.now() - timedelta(days=req.days_history)
+    ).strftime("%Y-%m-%d")
 
     try:
-        price_df   = MandiPriceFetcher().fetch(crop, state, start_date, end_date)
-        weather_df = WeatherFetcher().fetch(state, start_date, end_date)
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Data fetch failed: {e}")
+        price_df = MandiPriceFetcher().fetch(
+            crop, req.state, start_date, end_date
+        )
+        weather_df = WeatherFetcher().fetch(
+            req.state, start_date, end_date
+        )
 
-    recent_df = pd.merge(price_df, weather_df, on=["date", "state"], how="left")
-    recent_df[["temp_max","temp_min","rainfall_mm","humidity_pct"]] = \
-        recent_df[["temp_max","temp_min","rainfall_mm","humidity_pct"]].ffill().bfill()
+        recent_df = pd.merge(
+            price_df,
+            weather_df,
+            on=["date", "state"],
+            how="left"
+        )
 
-    try:
         result = get_predictor(crop).predict(recent_df)
+
+        return PredictResponse(
+            crop=crop,
+            state=req.state,
+            forecast=[
+                ForecastPoint(**x)
+                for x in result["forecast"]
+            ],
+            horizon_days=len(result["forecast"]),
+            generated_at=result["generated_at"],
+            model_info={
+                "architecture": "LSTM",
+                "unit": "INR/quintal"
+            }
+        )
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    response = PredictResponse(
-        crop=crop, state=state,
-        forecast=[ForecastPoint(**p) for p in result["forecast"]],
-        horizon_days=len(result["forecast"]),
-        generated_at=result["generated_at"],
-        model_info={"architecture": "Stacked LSTM", "unit": "INR per quintal"},
-    )
-    _cache[cache_key] = response.model_dump()
-    _cache[cache_key]["generated_at"] = result["generated_at"]
-    return response
+        raise HTTPException(500, str(e))
 
 
+# =========================================================
+# Batch Prediction
+# =========================================================
 @app.post("/predict/batch", tags=["prediction"])
 def batch_predict(req: BatchPredictRequest):
-    results, errors = {}, {}
+    results = {}
+
     for crop in req.crops:
         try:
-            results[crop] = predict_price(PredictRequest(
-                crop=crop, state=req.state, days_history=req.days_history
-            ))
-        except HTTPException as e:
-            errors[crop] = e.detail
-    return {"results": results, "errors": errors}
+            results[crop] = predict_price(
+                PredictRequest(
+                    crop=crop,
+                    state=req.state,
+                    days_history=req.days_history
+                )
+            )
+        except Exception as e:
+            results[crop] = {"error": str(e)}
+
+    return results
 
 
+# =========================================================
+# Live Prices
+# =========================================================
 @app.get("/prices/live", tags=["prices"])
 def get_live_prices(
-    crop:  str = Query(..., example="wheat"),
-    state: str = Query(..., example="Punjab"),
+    crop: str = Query(...),
+    state: str = Query(...)
 ):
-    cache_key = f"live:{crop}:{state}"
-    cached = _cache.get(cache_key)
-    if cached:
-        age = (datetime.utcnow() - datetime.fromisoformat(cached["fetched_at"])).seconds
-        if age < API_CONFIG.cache_ttl_seconds:
-            return {**cached, "cached": True}
+    today = datetime.now().strftime("%Y-%m-%d")
+    week_ago = (
+        datetime.now() - timedelta(days=7)
+    ).strftime("%Y-%m-%d")
 
-    today     = datetime.now().strftime("%Y-%m-%d")
-    yesterday = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
-    df = MandiPriceFetcher().fetch(crop.lower(), state, yesterday, today)
+    df = MandiPriceFetcher().fetch(
+        crop.lower(),
+        state,
+        week_ago,
+        today
+    )
+
     if df.empty:
-        raise HTTPException(status_code=404, detail="No price data available")
+        raise HTTPException(404, "No live price found")
 
     latest = df.sort_values("date").iloc[-1]
-    result = {
-        "crop": crop, "state": state,
-        "date":            latest["date"].strftime("%Y-%m-%d"),
-        "min_price_inr":   round(float(latest["min_price"]), 2),
-        "max_price_inr":   round(float(latest["max_price"]), 2),
+
+    return {
+        "crop": crop,
+        "state": state,
+        "date": latest["date"].strftime("%Y-%m-%d"),
         "modal_price_inr": round(float(latest["modal_price"]), 2),
-        "arrivals_tonnes": round(float(latest["arrivals_tonnes"]), 1),
-        "unit":            "INR per quintal",
-        "fetched_at":      datetime.utcnow().isoformat(),
-        "cached":          False,
+        "min_price_inr": round(float(latest["min_price"]), 2),
+        "max_price_inr": round(float(latest["max_price"]), 2)
     }
-    _cache[cache_key] = result
-    return result
 
 
+# =========================================================
+# Historical Prices
+# =========================================================
 @app.get("/prices/history/{crop}", tags=["prices"])
 def get_price_history(
-    crop:  str,
-    state: str = Query(..., example="Punjab"),
-    days:  int = Query(90, ge=7, le=730),
+    crop: str,
+    state: str,
+    days: int = 90
 ):
-    end_date   = datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-    df = MandiPriceFetcher().fetch(crop.lower(), state, start_date, end_date)
-    if df.empty:
-        raise HTTPException(status_code=404, detail="No data found")
-    df = df.sort_values("date")
-    return {
-        "crop": crop, "state": state,
-        "period": f"{start_date} to {end_date}",
-        "records": df[["date","min_price","max_price","modal_price","arrivals_tonnes"]]
-                     .assign(date=df["date"].dt.strftime("%Y-%m-%d"))
-                     .to_dict(orient="records"),
-    }
+    end_date = datetime.now().strftime("%Y-%m-%d")
+    start_date = (
+        datetime.now() - timedelta(days=days)
+    ).strftime("%Y-%m-%d")
+
+    df = MandiPriceFetcher().fetch(
+        crop.lower(),
+        state,
+        start_date,
+        end_date
+    )
+
+    return df.to_dict(orient="records")
 
 
-# ── Disease Detection ──────────────────────────
+# =========================================================
+# Disease Detection
+# =========================================================
 @app.post("/disease/detect", tags=["disease"])
 async def detect_disease(
-    image: UploadFile = File(..., description="Leaf photo (.jpg/.png)")
+    image: UploadFile = File(...)
 ):
-    """Upload a crop leaf photo to detect diseases."""
     if not image.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image (jpg/png)")
+        raise HTTPException(400, "Invalid image")
 
     image_bytes = await image.read()
-    if len(image_bytes) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="Image too large (max 10 MB)")
 
     try:
-        result = get_disease_predictor().predict_from_bytes(image_bytes)
-        return {**result, "filename": image.filename, "analyzed_at": datetime.utcnow().isoformat()}
+        result = get_disease_predictor().predict_from_bytes(
+            image_bytes
+        )
+
+        return {
+            **result,
+            "filename": image.filename,
+            "analyzed_at": datetime.utcnow().isoformat()
+        }
+
     except Exception as e:
-        logger.exception("Disease detection error")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Disease prediction failed")
+        raise HTTPException(500, str(e))
 
 
+# =========================================================
+# Disease Classes
+# =========================================================
 @app.get("/disease/classes", tags=["disease"])
 def list_disease_classes():
-    from disease.disease_model import DISEASE_CLASSES, DISEASE_META
+    from disease.disease_model import DISEASE_CLASSES
+
     return {
         "total": len(DISEASE_CLASSES),
-        "classes": [
-            {"id": d, "severity": DISEASE_META.get(d, {}).get("severity", "unknown")}
-            for d in DISEASE_CLASSES
-        ],
+        "classes": DISEASE_CLASSES
     }
+
+
+# =========================================================
+# AI Chatbot
+# =========================================================
+@app.post("/chat", tags=["chatbot"])
+def chat(req: ChatRequest):
+    msg = req.message.lower()
+
+    try:
+        if "price" in msg:
+            result = get_live_prices(
+                crop=req.crop,
+                state=req.state
+            )
+
+            return {
+                "response":
+                    f"Current {req.crop} price in {req.state} is ₹{result['modal_price_inr']} per quintal."
+            }
+
+        elif "predict" in msg:
+            result = predict_price(
+                PredictRequest(
+                    crop=req.crop,
+                    state=req.state,
+                    days_history=90
+                )
+            )
+
+            avg_price = sum(
+                p.price_inr for p in result.forecast
+            ) / len(result.forecast)
+
+            return {
+                "response":
+                    f"Predicted average {req.crop} price for next {result.horizon_days} days is ₹{round(avg_price,2)}."
+            }
+
+        elif "sell" in msg:
+            live = get_live_prices(
+                crop=req.crop,
+                state=req.state
+            )
+
+            forecast = predict_price(
+                PredictRequest(
+                    crop=req.crop,
+                    state=req.state,
+                    days_history=90
+                )
+            )
+
+            future_avg = sum(
+                p.price_inr for p in forecast.forecast
+            ) / len(forecast.forecast)
+
+            if future_avg > live["modal_price_inr"]:
+                advice = "Wait. Prices may increase."
+            else:
+                advice = "Sell now. Prices may fall."
+
+            return {"response": advice}
+
+        else:
+            return {
+                "response":
+                    "Ask me about crop prices, prediction, or selling advice."
+            }
+
+    except Exception as e:
+        raise HTTPException(500, str(e))

@@ -31,7 +31,14 @@ from disease.disease_model import (
 
 
 def train(args):
-    device    = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
+    print(f"Using device: {device}")
     data_root = args.data_dir   # e.g. data/raw/plantvillage/
 
     # ── Datasets ───────────────────────────────
@@ -57,6 +64,7 @@ def train(args):
 
     # ── Model ──────────────────────────────────
     model = build_disease_model(num_classes=len(full_ds.classes), pretrained=True)
+    model.to(device)
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # label smoothing reduces overconfidence
     optimizer = AdamW(
         filter(lambda p: p.requires_grad, model.parameters()),
@@ -132,7 +140,7 @@ def train(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-dir",   default="data/raw/plantvillage")
+    parser.add_argument("--data-dir", default="data/raw/plantvillage/color")
     parser.add_argument("--epochs",     type=int, default=30)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr",         type=float, default=1e-3)
