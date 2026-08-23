@@ -14,7 +14,7 @@ __pycache__/
 .Python
 *.so
 
-# ── Virtual Environments ────────────────────────
+# ── Virtual Environments ───────────────────────
 venv/
 .venv/
 env/
@@ -22,10 +22,6 @@ ENV/
 .venv.bak/
 
 # ── Trained Model Files ─────────────────────────
-models/saved/*.pt
-models/saved/*.pth
-models/scalers/*.pkl
-models/saved/training_curves_*.png
 *.pt
 *.pth
 *.pkl
@@ -33,30 +29,34 @@ models/saved/training_curves_*.png
 *.hdf5
 *.onnx
 
-# ── Disease Detection Model ─────────────────────
-disease/__pycache__/
+models/saved/
+models/scalers/
+
+# ── Disease Detection Models ────────────────────
 disease/models/
 disease/*.pt
+disease/*.pth
 disease/*.pkl
 
-# ── Datasets ────────────────────────────────────
-plantvillage dataset/
+# ── Large / Private Datasets ────────────────────
 data/raw/
 data/processed/
-*.csv
-*.json
+plantvillage\ dataset/
+
 *.zip
 *.tar
 *.tar.gz
+
+# Keep small, intentional datasets and JSON files
+# tracked unless they contain secrets.
 
 # ── Logs ────────────────────────────────────────
 logs/
 *.log
 log/
 
-# ── Jupyter Notebooks ───────────────────────────
+# ── Jupyter ─────────────────────────────────────
 .ipynb_checkpoints/
-*.ipynb
 
 # ── OS Files ────────────────────────────────────
 .DS_Store
@@ -68,7 +68,7 @@ Thumbs.db
 desktop.ini
 ehthumbs.db
 
-# ── IDEs & Editors ──────────────────────────────
+# ── IDEs & Editors ─────────────────────────────
 .vscode/
 .idea/
 *.swp
@@ -80,7 +80,7 @@ ehthumbs.db
 *.sublime-project
 *.sublime-workspace
 
-# ── Build / Dist ────────────────────────────────
+# ── Build / Dist ───────────────────────────────
 dist/
 build/
 *.egg-info/
@@ -88,7 +88,7 @@ build/
 MANIFEST
 site/
 
-# ── Testing & Coverage ──────────────────────────
+# ── Testing & Coverage ─────────────────────────
 .pytest_cache/
 .coverage
 htmlcov/
@@ -96,9 +96,8 @@ htmlcov/
 coverage.xml
 *.cover
 
-# ── Miscellaneous ───────────────────────────────
+# ── Miscellaneous ──────────────────────────────
 *.bak
 *.tmp
 *.temp
-.cache/__pycache__/
-*.pyc
+.cache/
