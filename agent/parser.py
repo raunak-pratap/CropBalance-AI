@@ -104,14 +104,66 @@ def extract_intent(text: str) -> str:
 
     return "unknown"
 
+def extract_intents(text: str) -> list[str]:
+    """Extract all supported intents from the user's request."""
+
+    text = text.lower()
+
+    intents = []
+
+    disease_keywords = [
+        "disease",
+        "diseased",
+        "infection",
+        "infected",
+        "leaf",
+        "leaves",
+    ]
+
+    price_keywords = [
+        "price",
+        "prices",
+        "forecast",
+        "predict",
+        "prediction",
+        "market",
+        "sell",
+        "selling",
+        "bhav",
+    ]
+
+    weather_keywords = [
+        "weather",
+        "temperature",
+        "rain",
+        "rainfall",
+        "humidity",
+        "climate",
+    ]
+
+    if any(keyword in text for keyword in disease_keywords):
+        intents.append("disease_detection")
+
+    if any(keyword in text for keyword in price_keywords):
+        intents.append("price_prediction")
+
+    if any(keyword in text for keyword in weather_keywords):
+        intents.append("weather")
+
+    if not intents:
+        intents.append("unknown")
+
+    return intents
+
 
 def parse_request(text: str) -> Dict:
-    """Extract intent and basic entities from a CropBalance user request."""
+    """Extract intents and basic entities from a CropBalance user request."""
 
     text = text.strip()
 
     return {
         "intent": extract_intent(text),
+        "intents": extract_intents(text),
         "crop": extract_crop(text),
         "state": extract_state(text),
     }

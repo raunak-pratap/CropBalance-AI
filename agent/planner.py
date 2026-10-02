@@ -1,38 +1,66 @@
 from typing import Dict
 
 
+INTENT_TO_TOOL = {
+    "disease_detection": "detect_disease",
+    "price_prediction": "predict_price",
+    "weather": "get_weather",
+}
+
+
 def plan_request(parsed: Dict) -> Dict:
     """
     Create a deterministic execution plan from parsed user input.
 
-    The parser is responsible for understanding the request.
-    The planner is responsible for selecting the appropriate tool.
+    The parser understands the request.
+    The planner maps intents to tools.
     """
 
-    intent = parsed.get("intent")
+    intents = parsed.get("intents", [])
 
-    if intent == "disease_detection":
+    # Backward compatibility with older parsed requests
+    if not intents:
+        intent = parsed.get("intent")
+
+        if intent:
+            intents = [intent]
+
+    # Remove unsupported intents
+    tools = [
+        INTENT_TO_TOOL[intent]
+        for intent in intents
+        if intent in INTENT_TO_TOOL
+    ]
+
+    # No supported intent
+    if not tools:
         return {
-            "intent": intent,
-            "tool": "detect_disease",
-            "reason": "The parsed request requires crop disease detection.",
+            "intent": "unknown",
+            "tools": [],
+            "reason": (
+                "No supported CropBalance capability "
+                "matched the parsed request."
+            ),
         }
 
-    if intent == "price_prediction":
+    # Single-tool request
+    if len(tools) == 1:
         return {
-            "intent": intent,
-            "tool": "predict_price",
-            "reason": "The parsed request requires crop price prediction.",
-        }
-    if intent == "weather":
-        return {
-            "intent": intent,
-            "tool": "get_weather",
-            "reason": "The parsed request requires weather information.",
+            "intent": intents[0],
+            "tool": tools[0],
+            "tools": tools,
+            "reason": (
+                f"The parsed request requires the "
+                f"{tools[0]} tool."
+            ),
         }
 
+    # Multi-tool request
     return {
-        "intent": "unknown",
-        "tool": None,
-        "reason": "No supported CropBalance capability matched the parsed request.",
+        "intent": "multi_tool",
+        "tools": tools,
+        "reason": (
+            "The parsed request requires multiple "
+            "CropBalance tools."
+        ),
     }

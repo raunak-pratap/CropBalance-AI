@@ -3,15 +3,15 @@ from typing import Dict
 from agent.planner import plan_request
 from agent.parser import parse_request
 from agent.executor import execute_plan
-
+from agent.verifier import verify_result
 
 
 class CropBalanceAgent:
     """
-    CropBalance Agent v0.1
+    CropBalance Agent v0.2
 
-    Simple deterministic agent:
-        request → plan → tool → result
+    Deterministic agent:
+        request → parse → plan → execute → result
     """
 
     def __init__(self):
@@ -36,6 +36,7 @@ class CropBalanceAgent:
 
                 return {
                     "intent": "price_prediction",
+                    "intents": ["price_prediction"],
                     "crop": crop,
                     "state": state,
                 }
@@ -49,7 +50,8 @@ class CropBalanceAgent:
         crop: str | None = None,
         state: str | None = None,
     ) -> Dict:
-                # 1. Try to complete a previous request first
+
+        # 1. Try to complete a previous request first
         completed = self._complete_pending_request(request)
 
         if completed:
@@ -58,20 +60,19 @@ class CropBalanceAgent:
             # 2. Parse the new request
             parsed = parse_request(request)
 
-
-
         # 3. Create an execution plan
         plan = plan_request(parsed)
 
-        # 2. Check whether we understand the request
-        if plan["tool"] is None:
+        # 4. Check whether we understand the request
+        if not plan.get("tools"):
             return {
                 "status": "unsupported",
                 "plan": plan,
+                "parsed": parsed,
                 "result": None,
             }
 
-                # 3. Execute selected tool
+        # 5. Execute selected tool(s)
         execution = execute_plan(
             plan=plan,
             parsed=parsed,
@@ -80,6 +81,17 @@ class CropBalanceAgent:
             state=state,
         )
 
+                # 6. Handle execution failures
+        if execution["status"] == "error":
+            return {
+                "status": "error",
+                "plan": plan,
+                "parsed": parsed,
+                "result": execution.get("result", {}),
+                "errors": execution.get("errors", {}),
+            }
+
+        # 7. Handle missing input from a single-tool request
         if execution["status"] == "missing_input":
             if parsed["intent"] == "price_prediction":
                 self.pending_request = {
@@ -93,24 +105,58 @@ class CropBalanceAgent:
                 "status": "missing_input",
                 "plan": plan,
                 "parsed": parsed,
-                "result": None,
-                "missing": execution["missing"],
-                "message": execution["message"],
-            }
-
-        if execution["status"] == "unsupported":
-            return {
-                "status": "unsupported",
-                "plan": plan,
-                "parsed": parsed,
-                "result": None,
+                "result": execution.get("result"),
+                "missing": execution.get("missing", []),
                 "message": execution.get("message"),
             }
 
-        # 4. Return the tool result
+        # 8. Verify every successful tool result
+        verified_results = {}
+        verification_errors = {}
+
+        for tool, result in execution.get("result", {}).items():
+            verification = verify_result(
+                tool=tool,
+                result=result,
+            )
+
+            if verification["valid"]:
+                verified_results[tool] = {
+                    "result": result,
+                    "verification": verification,
+                }
+            else:
+                verification_errors[tool] = verification
+
+        # 9. Handle partial execution
+        if execution["status"] == "partial_success":
+            return {
+                "status": "partial_success",
+                "plan": plan,
+                "parsed": parsed,
+                "result": verified_results,
+                "errors": execution.get("errors", {}),
+                "verification_errors": verification_errors,
+            }
+
+        # 10. Handle verification failure
+        if verification_errors and not verified_results:
+            return {
+                "status": "verification_failed",
+                "plan": plan,
+                "parsed": parsed,
+                "result": {},
+                "verification_errors": verification_errors,
+            }
+
+        # 11. Everything executed and verified successfully
         return {
             "status": "success",
             "plan": plan,
             "parsed": parsed,
-            "result": execution["result"],
+            "result": verified_results,
+            "errors": execution.get("errors", {}),
+            "verification_errors": verification_errors,
         }
+
+        
