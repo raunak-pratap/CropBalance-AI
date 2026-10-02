@@ -4,6 +4,7 @@ from agent.planner import plan_request
 from agent.parser import parse_request
 from agent.executor import execute_plan
 from agent.verifier import verify_result
+from agent.response import build_response
 
 
 class CropBalanceAgent:
@@ -150,11 +151,18 @@ class CropBalanceAgent:
             }
 
         # 11. Everything executed and verified successfully
+        response = build_response(
+        verified_results=verified_results,
+        status="success",
+        errors=execution.get("errors", {}),
+        )
+
         return {
             "status": "success",
             "plan": plan,
             "parsed": parsed,
             "result": verified_results,
+            "response": response,
             "errors": execution.get("errors", {}),
             "verification_errors": verification_errors,
         }

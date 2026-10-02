@@ -63,7 +63,10 @@ class MandiPriceFetcher:
             return self._fetch_agmarknet(crop, state, start_date, end_date)
 
         logger.warning("No API keys found — using synthetic data generator")
-        return self._generate_synthetic(crop, state, start_date, end_date)
+        df = self._generate_synthetic(crop, state, start_date, end_date)
+        df.attrs["data_source"] = "synthetic"
+        df.attrs["is_live"] = False
+        return df
 
     # ── eNAM API ──────────────────────────────
     def _fetch_enam(self, crop, state, start_date, end_date) -> pd.DataFrame:
@@ -78,10 +81,16 @@ class MandiPriceFetcher:
             resp = self.session.get(API_CONFIG.enam_base_url, params=params, timeout=15)
             resp.raise_for_status()
             raw = resp.json()
-            return self._parse_enam_response(raw, crop, state)
+            df = self._parse_enam_response(raw, crop, state)
+            df.attrs["data_source"] = "enam"
+            df.attrs["is_live"] = True
+            return df
         except Exception as e:
             logger.error(f"eNAM fetch failed: {e} — falling back to synthetic data")
-            return self._generate_synthetic(crop, state, start_date, end_date)
+            df = self._generate_synthetic(crop, state, start_date, end_date)
+            df.attrs["data_source"] = "synthetic_fallback"
+            df.attrs["is_live"] = False
+            return df
 
     def _parse_enam_response(self, raw: dict, crop: str, state: str) -> pd.DataFrame:
         records = raw.get("data", [])
@@ -119,10 +128,16 @@ class MandiPriceFetcher:
                 df["crop"]  = crop
                 df["state"] = state
                 df["date"]  = pd.to_datetime(df["date"], dayfirst=True, errors="coerce")
-                return df.dropna(subset=["date"])
+                df = df.dropna(subset=["date"])
+                df.attrs["data_source"] = "agmarknet"
+                df.attrs["is_live"] = True
+                return df
         except Exception as e:
             logger.error(f"Agmarknet fetch failed: {e} — falling back to synthetic data")
-        return self._generate_synthetic(crop, state, start_date, end_date)
+            df = self._generate_synthetic(crop, state, start_date, end_date)
+            df.attrs["data_source"] = "synthetic_fallback"
+            df.attrs["is_live"] = False
+            return df
 
     # ── Synthetic data generator ───────────────
     def _generate_synthetic(
