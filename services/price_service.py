@@ -118,9 +118,16 @@ class PriceService:
         predictor = self._get_predictor(crop)
 
         result = predictor.predict(df)
-
-        # Add useful context for the agent.
         result["state"] = state
         result["history_days"] = days_history
+
+        result["data_source"] = price_df.attrs.get(
+            "data_source",
+            "unknown",
+        )
+        result["is_live"] = price_df.attrs.get(
+            "is_live",
+            False,
+        )
 
         return result

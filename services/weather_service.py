@@ -36,8 +36,19 @@ class WeatherService:
         )
 
         return {
-            "state": state,
-            "days": len(df),
-            "weather": df.to_dict(orient="records"),
-            "generated_at": datetime.now().isoformat(),
-        }
+        "state": state,
+        "days": len(df),
+        "weather": df.to_dict(orient="records"),
+        "generated_at": datetime.now().isoformat(),
+        "data_source": df.attrs.get(
+            "data_source",
+            "unknown",
+        ),
+        "is_live": df.attrs.get(
+            "is_live",
+            False,
+        ),
+        "source_counts": df.attrs.get(
+            "source_counts",
+        ),
+    }

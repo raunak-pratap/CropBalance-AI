@@ -241,12 +241,16 @@ class WeatherFetcher:
         if API_CONFIG.openweather_api_key:
             return self._fetch_owm(state, start_date, end_date)
         logger.warning("No OpenWeather key — using climate normals")
-        return self._generate_climate_normals(state, start_date, end_date)
+        df = self._generate_climate_normals(state, start_date, end_date)
+        df.attrs["data_source"] = "climate_normals"
+        df.attrs["is_live"] = False
+        return df
 
     def _fetch_owm(self, state: str, start_date: str, end_date: str) -> pd.DataFrame:
         lat, lon = STATE_COORDINATES.get(state, (20.5, 78.9))
         dates = pd.date_range(start=start_date, end=end_date, freq="D")
         rows = []
+        sources = []
 
         for dt in dates:
             unix_ts = int(dt.timestamp())
@@ -270,12 +274,35 @@ class WeatherFetcher:
                     "rainfall_mm":  daily.get("rain", {}).get("1h", 0) * 24,
                     "humidity_pct": daily.get("humidity", 60),
                 })
+
+                sources.append("openweather")
+
                 time.sleep(0.2)  # Rate limit: 60 calls/min on free tier
             except Exception as e:
                 logger.warning(f"OWM fetch failed for {dt.date()}: {e}")
                 rows.append(self._climate_row(state, dt))
+                sources.append("climate_normals")
 
-        return pd.DataFrame(rows)
+        df = pd.DataFrame(rows)
+
+        unique_sources = set(sources)
+
+        if unique_sources == {"openweather"}:
+            df.attrs["data_source"] = "openweather"
+            df.attrs["is_live"] = True
+        elif unique_sources == {"climate_normals"}:
+            df.attrs["data_source"] = "climate_normals"
+            df.attrs["is_live"] = False
+        else:
+            df.attrs["data_source"] = "mixed"
+            df.attrs["is_live"] = False
+
+        df.attrs["source_counts"] = {
+            source: sources.count(source)
+            for source in unique_sources
+        }
+
+        return df
 
     def _generate_climate_normals(
         self, state: str, start_date: str, end_date: str

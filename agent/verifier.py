@@ -21,8 +21,11 @@ def verify_result(tool: str, result: Dict) -> Dict:
         if not forecast:
             return {
                 "valid": False,
-                "issues": ["Price prediction contains no forecast data."],
+                "issues": ["Price prediction contains no forecast data."]
             }
+
+        data_source = result.get("data_source", "unknown")
+        is_live = result.get("is_live", False)
 
         return {
             "valid": True,
@@ -30,7 +33,9 @@ def verify_result(tool: str, result: Dict) -> Dict:
             "checks": {
                 "forecast_present": True,
                 "forecast_points": len(forecast),
-            },
+                "data_source": data_source,
+                "is_live": is_live,
+            }
         }
 
     if tool == "get_weather":
@@ -39,8 +44,11 @@ def verify_result(tool: str, result: Dict) -> Dict:
         if not weather:
             return {
                 "valid": False,
-                "issues": ["Weather result contains no weather records."],
+                "issues": ["Weather result contains no weather records."]
             }
+
+        data_source = result.get("data_source", "unknown")
+        is_live = result.get("is_live", False)
 
         return {
             "valid": True,
@@ -48,7 +56,9 @@ def verify_result(tool: str, result: Dict) -> Dict:
             "checks": {
                 "weather_present": True,
                 "weather_records": len(weather),
-            },
+                "data_source": data_source,
+                "is_live": is_live,
+            }
         }
 
     if tool == "detect_disease":

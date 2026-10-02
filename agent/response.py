@@ -24,9 +24,21 @@ def build_response(
         crop = data.get("crop", "crop")
         state = data.get("state", "your state")
 
+        data_source = data.get("data_source", "unknown")
+        is_live = data.get("is_live", False)
+
+        source_note = ""
+
+        if not is_live:
+            source_note = (
+                f" ⚠️ Data source: {data_source}. "
+                "This is not live market data."
+            )
+
         sections.append(
             f"📈 Price forecast for {crop} in {state}: "
             f"{len(forecast)} forecast points are available."
+            f"{source_note}"
         )
 
     if "get_weather" in verified_results:
@@ -35,9 +47,21 @@ def build_response(
         state = data.get("state", "your state")
         days = data.get("days", len(data.get("weather", [])))
 
+        data_source = data.get("data_source", "unknown")
+        is_live = data.get("is_live", False)
+
+        source_note = ""
+
+        if not is_live:
+            source_note = (
+                f" ⚠️ Data source: {data_source}. "
+                "This is not live weather data."
+            )
+
         sections.append(
             f"🌦️ Weather information for {state}: "
             f"{days} days of weather data are available."
+            f"{source_note}"
         )
 
     if "detect_disease" in verified_results:
