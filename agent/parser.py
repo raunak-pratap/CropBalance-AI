@@ -90,6 +90,18 @@ def extract_intent(text: str) -> str:
     if any(keyword in text for keyword in price_keywords):
         return "price_prediction"
 
+    weather_keywords = [
+    "weather",
+    "temperature",
+    "rain",
+    "rainfall",
+    "humidity",
+    "climate",
+]
+
+    if any(keyword in text for keyword in weather_keywords):
+        return "weather"
+
     return "unknown"
 
 

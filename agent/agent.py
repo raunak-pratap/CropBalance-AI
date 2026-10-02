@@ -2,7 +2,7 @@ from typing import Dict
 
 from agent.planner import plan_request
 from agent.parser import parse_request
-from agent.tools import detect_disease, predict_price
+from agent.executor import execute_plan
 
 
 
@@ -58,6 +58,8 @@ class CropBalanceAgent:
             # 2. Parse the new request
             parsed = parse_request(request)
 
+
+
         # 3. Create an execution plan
         plan = plan_request(parsed)
 
@@ -69,61 +71,40 @@ class CropBalanceAgent:
                 "result": None,
             }
 
-        # 3. Execute selected tool
-        if plan["tool"] == "detect_disease":
-            if not image_path:
-                return {
-                    "status": "missing_input",
-                    "plan": plan,
-                    "parsed": parsed,
-                    "result": None,
-                    "missing": ["image"],
-                    "message": "Please upload a clear image of the crop leaf.",
-                }
+                # 3. Execute selected tool
+        execution = execute_plan(
+            plan=plan,
+            parsed=parsed,
+            image_path=image_path,
+            crop=crop,
+            state=state,
+        )
 
-            result = detect_disease(image_path)
-
-        elif plan["tool"] == "predict_price":
-            crop = crop or parsed["crop"]
-            state = state or parsed["state"]
-
-            if not crop or not state:
-                missing = []
-
-                if not crop:
-                    missing.append("crop")
-
-                if not state:
-                    missing.append("state")
-
+        if execution["status"] == "missing_input":
+            if parsed["intent"] == "price_prediction":
                 self.pending_request = {
                     "intent": parsed["intent"],
-                    "crop": crop,
-                    "state": state,
-                    "missing": missing,
+                    "crop": crop or parsed.get("crop"),
+                    "state": state or parsed.get("state"),
+                    "missing": execution["missing"],
                 }
 
-                return {
-                    "status": "missing_input",
-                    "plan": plan,
-                    "parsed": parsed,
-                    "result": None,
-                    "missing": missing,
-                    "message": (
-                        f"Please provide your {', '.join(missing)}."
-                    ),
-                }
+            return {
+                "status": "missing_input",
+                "plan": plan,
+                "parsed": parsed,
+                "result": None,
+                "missing": execution["missing"],
+                "message": execution["message"],
+            }
 
-            result = predict_price(
-                crop=crop,
-                state=state,
-            )
-
-        else:
+        if execution["status"] == "unsupported":
             return {
                 "status": "unsupported",
                 "plan": plan,
+                "parsed": parsed,
                 "result": None,
+                "message": execution.get("message"),
             }
 
         # 4. Return the tool result
@@ -131,5 +112,5 @@ class CropBalanceAgent:
             "status": "success",
             "plan": plan,
             "parsed": parsed,
-            "result": result,
+            "result": execution["result"],
         }

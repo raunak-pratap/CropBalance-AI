@@ -24,6 +24,12 @@ def plan_request(parsed: Dict) -> Dict:
             "tool": "predict_price",
             "reason": "The parsed request requires crop price prediction.",
         }
+    if intent == "weather":
+        return {
+            "intent": intent,
+            "tool": "get_weather",
+            "reason": "The parsed request requires weather information.",
+        }
 
     return {
         "intent": "unknown",

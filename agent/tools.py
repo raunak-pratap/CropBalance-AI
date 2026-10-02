@@ -2,10 +2,12 @@ from typing import Dict
 
 from services.disease_service import DiseaseService
 from services.price_service import PriceService
+from services.weather_service import WeatherService
 
 
 _disease_service = None
 _price_service = None
+_weather_service = None
 
 
 def _get_disease_service() -> DiseaseService:
@@ -51,6 +53,29 @@ def predict_price(
 
     return service.predict_price(
         crop=crop,
+        state=state,
+        days_history=days_history,
+    )
+
+def _get_weather_service() -> WeatherService:
+    global _weather_service
+
+    if _weather_service is None:
+        _weather_service = WeatherService()
+
+    return _weather_service
+
+
+def get_weather(
+    state: str,
+    days_history: int = 7,
+) -> Dict:
+    """
+    Get weather data for a state.
+    """
+    service = _get_weather_service()
+
+    return service.get_weather(
         state=state,
         days_history=days_history,
     )
