@@ -109,35 +109,133 @@ class MandiPriceFetcher:
         return pd.DataFrame(rows)
 
     # ── Agmarknet ─────────────────────────────
-    def _fetch_agmarknet(self, crop, state, start_date, end_date) -> pd.DataFrame:
-        params = {
-            "Commodity": crop.title(),
-            "State":     state,
-            "From":      start_date,
-            "To":        end_date,
+    def _fetch_agmarknet(
+        self,
+        crop: str,
+        state: str,
+        start_date: str,
+        end_date: str,
+    ) -> pd.DataFrame:
+        """Fetch and normalize historical mandi prices from AGMARKNET."""
+
+        # AGMARKNET frontend IDs discovered from its filters.
+        STATE_IDS = {
+            "Punjab": 28,
         }
-        try:
-            resp = self.session.get(API_CONFIG.agmarknet_base_url, params=params, timeout=15)
-            resp.raise_for_status()
-            # Agmarknet returns HTML table — parse with pandas
-            tables = pd.read_html(resp.text)
-            if tables:
-                df = tables[0]
-                df.columns = ["date", "market", "commodity", "min_price", "max_price",
-                              "modal_price", "arrivals_tonnes"]
-                df["crop"]  = crop
-                df["state"] = state
-                df["date"]  = pd.to_datetime(df["date"], dayfirst=True, errors="coerce")
-                df = df.dropna(subset=["date"])
-                df.attrs["data_source"] = "agmarknet"
-                df.attrs["is_live"] = True
-                return df
-        except Exception as e:
-            logger.error(f"Agmarknet fetch failed: {e} — falling back to synthetic data")
-            df = self._generate_synthetic(crop, state, start_date, end_date)
-            df.attrs["data_source"] = "synthetic_fallback"
-            df.attrs["is_live"] = False
-            return df
+
+        COMMODITY_IDS = {
+            "wheat": 1,
+        }
+
+        if state not in STATE_IDS:
+            raise ValueError(
+                f"AGMARKNET state ID not configured for: {state}"
+            )
+
+        if crop.lower() not in COMMODITY_IDS:
+            raise ValueError(
+                f"AGMARKNET commodity ID not configured for: {crop}"
+            )
+
+        state_id = STATE_IDS[state]
+        commodity_id = COMMODITY_IDS[crop.lower()]
+
+        start = pd.to_datetime(start_date)
+        end = pd.to_datetime(end_date)
+
+        # Generate the months covering the requested date range.
+        month_starts = pd.date_range(
+            start=start.replace(day=1),
+            end=end.replace(day=1),
+            freq="MS",
+        )
+
+        all_records = []
+
+        for month_start in month_starts:
+
+            params = {
+                "year": month_start.year,
+                "month": month_start.month,
+                "includeExcel": "false",
+                "stateId": state_id,
+                "commodityId": commodity_id,
+            }
+
+            url = (
+                "https://api.agmarknet.gov.in/v1/"
+                "prices-and-arrivals/date-wise/"
+                "specific-commodity"
+            )
+
+            logger.info(
+                f"AGMARKNET: fetching {crop} / {state} "
+                f"{month_start.year}-{month_start.month:02d}"
+            )
+
+            response = self.session.get(
+                url,
+                params=params,
+                timeout=30,
+            )
+
+            response.raise_for_status()
+
+            raw = response.json()
+
+            if not raw.get("success"):
+                logger.warning(
+                    f"AGMARKNET returned unsuccessful response for "
+                    f"{month_start.year}-{month_start.month:02d}"
+                )
+                continue
+
+            month_df = self._parse_agmarknet_response(
+                raw,
+                state,
+            )
+
+            if not month_df.empty:
+                all_records.append(month_df)
+
+        if not all_records:
+            raise ValueError(
+                f"No AGMARKNET data found for "
+                f"{crop} in {state} between "
+                f"{start_date} and {end_date}"
+            )
+
+        market_df = pd.concat(
+            all_records,
+            ignore_index=True,
+        )
+
+        # Keep only the requested date range.
+        market_df = market_df[
+            (market_df["date"] >= start)
+            & (market_df["date"] <= end)
+        ].copy()
+
+        if market_df.empty:
+            raise ValueError(
+                f"AGMARKNET returned no records inside "
+                f"{start_date} - {end_date}"
+            )
+
+        daily_df = self._aggregate_agmarknet_daily(
+            market_df
+        )
+
+        daily_df.attrs["data_source"] = "agmarknet"
+        daily_df.attrs["is_live"] = False
+        daily_df.attrs["is_historical"] = True
+
+        logger.info(
+            f"AGMARKNET: {len(market_df)} market-level records → "
+            f"{len(daily_df)} daily records"
+        )
+
+        return daily_df
 
     # ── Synthetic data generator ───────────────
     def _generate_synthetic(
@@ -205,6 +303,93 @@ class MandiPriceFetcher:
         logger.info(f"Generated {len(df)} synthetic rows for {crop} in {state}")
         return df
 
+    def _parse_agmarknet_response(
+        self,
+        raw: dict,
+        state: str,
+    ) -> pd.DataFrame:
+        """Normalize AGMARKNET date-wise commodity response."""
+
+        records = []
+
+        for market in raw.get("markets", []):
+            market_name = market.get("marketName", "Unknown")
+
+            for day in market.get("dates", []):
+                arrival_date = day.get("arrivalDate")
+
+                for row in day.get("data", []):
+                    records.append({
+                        "date": pd.to_datetime(
+                            arrival_date,
+                            format="%d/%m/%Y",
+                        ),
+                        "state": state,
+                        "market": market_name,
+                        "variety": row.get("variety"),
+                        "arrivals_tonnes": float(
+                            row.get("arrivals", 0) or 0
+                        ),
+                        "min_price": float(
+                            row.get("minimumPrice", 0) or 0
+                        ),
+                        "max_price": float(
+                            row.get("maximumPrice", 0) or 0
+                        ),
+                        "modal_price": float(
+                            row.get("modalPrice", 0) or 0
+                        ),
+                    })
+
+        if not records:
+            return pd.DataFrame()
+
+        return pd.DataFrame(records)
+
+    def _aggregate_agmarknet_daily(
+        self,
+        df: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Aggregate market-level AGMARKNET data into daily state-level data."""
+
+        if df.empty:
+            return pd.DataFrame()
+
+        def weighted_average(group, value_col):
+            weights = group["arrivals_tonnes"]
+
+            if weights.sum() <= 0:
+                return group[value_col].mean()
+
+            return (group[value_col] * weights).sum() / weights.sum()
+
+        daily = (
+            df.groupby(["date", "state"])
+            .apply(
+                lambda group: pd.Series({
+                    "arrivals_tonnes": group["arrivals_tonnes"].sum(),
+
+                    # Preserve actual observed price boundaries.
+                    "min_price": group["min_price"].min(),
+                    "max_price": group["max_price"].max(),
+
+                    # Arrival-weighted market modal price.
+                    "modal_price": weighted_average(
+                        group,
+                        "modal_price",
+                    ),
+
+                    "market_count": group["market"].nunique(),
+                }),
+                include_groups=False,
+            )
+            .reset_index()
+        )
+
+        daily = daily.sort_values("date").reset_index(drop=True)
+
+        return daily
+
 
 # ──────────────────────────────────────────────
 # Weather Fetcher
@@ -238,13 +423,129 @@ class WeatherFetcher:
         self.base_url = API_CONFIG.openweather_base_url
 
     def fetch(self, state: str, start_date: str, end_date: str) -> pd.DataFrame:
-        if API_CONFIG.openweather_api_key:
-            return self._fetch_owm(state, start_date, end_date)
-        logger.warning("No OpenWeather key — using climate normals")
-        df = self._generate_climate_normals(state, start_date, end_date)
-        df.attrs["data_source"] = "climate_normals"
-        df.attrs["is_live"] = False
-        return df
+        """
+        Fetch historical weather data.
+
+        Open-Meteo is used for historical weather because the
+        current OpenWeather subscription does not provide the
+        historical endpoint required by the original implementation.
+        """
+        try:
+            return self._fetch_open_meteo(
+                state=state,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+        except Exception as e:
+            logger.warning(
+                f"Open-Meteo historical weather failed: {e} "
+                f"— falling back to climate normals"
+            )
+
+            df = self._generate_climate_normals(
+                state,
+                start_date,
+                end_date,
+            )
+
+            df.attrs["data_source"] = "climate_normals"
+            df.attrs["is_live"] = False
+            df.attrs["source_counts"] = {
+                "climate_normals": len(df)
+            }
+
+            return df
+
+    def _fetch_open_meteo(
+        self,
+        state: str,
+        start_date: str,
+        end_date: str,
+    ) -> pd.DataFrame:
+        """Fetch historical daily weather from Open-Meteo."""
+
+        lat, lon = STATE_COORDINATES.get(state, (20.5, 78.9))
+
+        url = "https://archive-api.open-meteo.com/v1/archive"
+
+        params = {
+            "latitude": lat,
+            "longitude": lon,
+            "start_date": start_date,
+            "end_date": end_date,
+            "daily": (
+                "temperature_2m_max,"
+                "temperature_2m_min,"
+                "precipitation_sum"
+            ),
+            "hourly": "relative_humidity_2m",
+            "timezone": "Asia/Kolkata",
+        }
+
+        response = self.session.get(
+            url,
+            params=params,
+            timeout=30,
+        )
+        response.raise_for_status()
+
+        data = response.json()
+
+        # Daily weather
+        daily = pd.DataFrame({
+            "date": pd.to_datetime(data["daily"]["time"]),
+            "temp_max": data["daily"]["temperature_2m_max"],
+            "temp_min": data["daily"]["temperature_2m_min"],
+            "rainfall_mm": data["daily"]["precipitation_sum"],
+        })
+
+        # Hourly humidity → daily mean
+        hourly = pd.DataFrame({
+            "time": pd.to_datetime(data["hourly"]["time"]),
+            "humidity_pct": data["hourly"]["relative_humidity_2m"],
+        })
+
+        hourly["date"] = hourly["time"].dt.normalize()
+
+        humidity_daily = (
+            hourly
+            .groupby("date")["humidity_pct"]
+            .mean()
+            .reset_index()
+        )
+
+        weather_df = daily.merge(
+            humidity_daily,
+            on="date",
+            how="left",
+        )
+
+        weather_df["state"] = state
+
+        weather_df = weather_df[
+            [
+                "date",
+                "state",
+                "temp_max",
+                "temp_min",
+                "rainfall_mm",
+                "humidity_pct",
+            ]
+        ]
+
+        weather_df.attrs["data_source"] = "open_meteo"
+        weather_df.attrs["is_live"] = False
+        weather_df.attrs["source_counts"] = {
+            "open_meteo": len(weather_df)
+        }
+
+        logger.info(
+            f"Open-Meteo: fetched {len(weather_df)} historical "
+            f"weather rows for {state}"
+        )
+
+        return weather_df
 
     def _fetch_owm(self, state: str, start_date: str, end_date: str) -> pd.DataFrame:
         lat, lon = STATE_COORDINATES.get(state, (20.5, 78.9))
