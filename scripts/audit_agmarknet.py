@@ -110,6 +110,69 @@ def main():
                 start_date=START_DATE,
                 end_date=END_DATE,
             )
+
+            print("\n========== DATA QUALITY AUDIT ==========")
+
+            print("Date range:")
+            print(df["date"].min(), "→", df["date"].max())
+
+            expected_days = (
+                df["date"].max() - df["date"].min()
+            ).days + 1
+
+            actual_days = df["date"].nunique()
+
+            print("Expected calendar days:", expected_days)
+            print("Reporting days:", actual_days)
+
+            coverage = actual_days / expected_days * 100
+
+            print(f"Coverage: {coverage:.1f}%")
+
+            # Missing calendar dates
+            full_dates = pd.date_range(
+                df["date"].min(),
+                df["date"].max(),
+                freq="D",
+            )
+
+            missing_dates = full_dates.difference(
+                pd.to_datetime(df["date"])
+            )
+
+            print("Missing days:", len(missing_dates))
+
+            # Largest gap
+            if len(df) > 1:
+                dates = pd.to_datetime(
+                    df["date"]
+                ).sort_values()
+
+                gaps = dates.diff().dt.days.dropna()
+
+                print("Maximum gap:", gaps.max(), "days")
+            else:
+                print("Maximum gap: N/A")
+
+            print("\nPrice statistics:")
+            print(
+                df[
+                    [
+                        "min_price",
+                        "max_price",
+                        "modal_price",
+                    ]
+                ].describe()
+            )
+
+            print("\nMarket count:")
+            print(df["market_count"].describe())
+
+            print("\nMissing values:")
+            print(df.isna().sum())
+
+            print("========================================")
+
             source = df.attrs.get("data_source")
 
             if source != "agmarknet":

@@ -5,10 +5,12 @@ Merges mandi price and weather data, engineers time-aware features,
 and prepares PyTorch-ready sliding-window sequences for LSTM training.
 """
 
+from matplotlib.style import available
 import numpy as np
 import pandas as pd
 import joblib
 import os
+import copy
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset, DataLoader
 import torch
@@ -229,8 +231,8 @@ def run_preprocessing_pipeline(
     df_scaled = apply_scalers(df, scalers)
 
     # 5. Build DataLoaders
-    cfg_copy        = LSTM_CONFIG
-    cfg_copy.feature_columns = available   # Use only available columns
+    cfg_copy = copy.deepcopy(LSTM_CONFIG)
+    cfg_copy.feature_columns = available
     train_dl, val_dl, test_dl = make_dataloaders(df_scaled, cfg_copy)
 
     meta = {

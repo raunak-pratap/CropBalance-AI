@@ -11,6 +11,7 @@ synthetic dataset is generated so the rest of the pipeline still runs.
 import os
 import time
 import requests
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -95,6 +96,99 @@ class MandiPriceFetcher:
                 time.sleep(wait_time)
 
         raise RuntimeError("AGMARKNET request failed")
+
+    def _get_cache_path(
+        self,
+        crop: str,
+        state: str,
+        year: int,
+        month: int,
+    ):
+        """Return the local cache path for one AGMARKNET month."""
+
+        safe_crop = crop.lower().replace(" ", "_")
+        safe_state = state.lower().replace(" ", "_")
+
+        filename = (
+            f"{safe_crop}_{safe_state}_"
+            f"{year}_{month:02d}.csv"
+        )
+
+        return Path(
+            "data/raw/agmarknet"
+        ) / filename
+
+
+    def _save_agmarknet_cache(
+        self,
+        df: pd.DataFrame,
+        crop: str,
+        state: str,
+        year: int,
+        month: int,
+    ):
+        """Save successful AGMARKNET market-level data."""
+
+        cache_path = self._get_cache_path(
+            crop,
+            state,
+            year,
+            month,
+        )
+
+        cache_path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        df.to_csv(
+            cache_path,
+            index=False,
+        )
+
+        logger.info(
+            f"AGMARKNET cache saved: {cache_path}"
+        )
+
+
+    def _load_agmarknet_cache(
+        self,
+        crop: str,
+        state: str,
+        year: int,
+        month: int,
+    ):
+        """Load cached AGMARKNET market-level data."""
+
+        cache_path = self._get_cache_path(
+            crop,
+            state,
+            year,
+            month,
+        )
+
+        if not cache_path.exists():
+            return None
+
+        try:
+            df = pd.read_csv(
+                cache_path,
+                parse_dates=["date"],
+            )
+
+            logger.info(
+                f"AGMARKNET cache hit: {cache_path}"
+            )
+
+            return df
+
+        except Exception as e:
+            logger.warning(
+                f"Could not load AGMARKNET cache "
+                f"{cache_path}: {e}"
+            )
+
+            return None
 
     def fetch(
         self,
@@ -201,126 +295,204 @@ class MandiPriceFetcher:
 
     # ── Agmarknet ─────────────────────────────
     def _fetch_agmarknet(
-            self,
-            crop: str,
-            state: str,
-            start_date: str,
-            end_date: str,
-        ) -> pd.DataFrame:
-            """Fetch and normalize historical mandi prices from AGMARKNET."""
-    
-            # Resolve human-readable names to AGMARKNET IDs dynamically.
-            try:
-                state_id = self.metadata_resolver.get_state_id(state)
-                commodity_id = self.metadata_resolver.get_commodity_id(crop)
-    
-            except ValueError as e:
-                raise ValueError(
-                    f"Could not resolve AGMARKNET IDs for "
-                    f"{crop} / {state}: {e}"
-                ) from e
-    
+        self,
+        crop: str,
+        state: str,
+        start_date: str,
+        end_date: str,
+    ) -> pd.DataFrame:
+        """Fetch and normalize historical mandi prices from AGMARKNET."""
+
+        # Resolve human-readable names to AGMARKNET IDs dynamically.
+        try:
+            state_id = self.metadata_resolver.get_state_id(state)
+            commodity_id = self.metadata_resolver.get_commodity_id(crop)
+
+        except ValueError as e:
+            raise ValueError(
+                f"Could not resolve AGMARKNET IDs for "
+                f"{crop} / {state}: {e}"
+            ) from e
+
+        logger.info(
+            f"AGMARKNET IDs resolved: "
+            f"{crop}={commodity_id}, {state}={state_id}"
+        )
+
+        start = pd.to_datetime(start_date)
+        end = pd.to_datetime(end_date)
+
+        # Generate the months covering the requested date range.
+        month_starts = pd.date_range(
+            start=start.replace(day=1),
+            end=end.replace(day=1),
+            freq="MS",
+        )
+
+        all_records = []
+        successful_months = []
+        failed_months = []
+
+        for month_start in month_starts:
+            year = month_start.year
+            month = month_start.month
+            month_key = f"{year}-{month:02d}"
+
+            params = {
+                "year": year,
+                "month": month,
+                "includeExcel": "false",
+                "stateId": state_id,
+                "commodityId": commodity_id,
+            }
+
+            url = (
+                "https://api.agmarknet.gov.in/v1/"
+                "prices-and-arrivals/date-wise/"
+                "specific-commodity"
+            )
+
             logger.info(
-                f"AGMARKNET IDs resolved: "
-                f"{crop}={commodity_id}, {state}={state_id}"
+                f"AGMARKNET: processing {crop} / {state} {month_key}"
             )
-    
-            start = pd.to_datetime(start_date)
-            end = pd.to_datetime(end_date)
-    
-            # Generate the months covering the requested date range.
-            month_starts = pd.date_range(
-                start=start.replace(day=1),
-                end=end.replace(day=1),
-                freq="MS",
+
+            # ---------------------------------------------------------
+            # Try local cache first
+            # ---------------------------------------------------------
+            cached_df = self._load_agmarknet_cache(
+                crop,
+                state,
+                year,
+                month,
             )
-    
-            all_records = []
-    
-            for month_start in month_starts:
-    
-                params = {
-                    "year": month_start.year,
-                    "month": month_start.month,
-                    "includeExcel": "false",
-                    "stateId": state_id,
-                    "commodityId": commodity_id,
-                }
-    
-                url = (
-                    "https://api.agmarknet.gov.in/v1/"
-                    "prices-and-arrivals/date-wise/"
-                    "specific-commodity"
-                )
-    
+
+            if cached_df is not None and not cached_df.empty:
                 logger.info(
-                    f"AGMARKNET: fetching {crop} / {state} "
-                    f"{month_start.year}-{month_start.month:02d}"
+                    f"AGMARKNET: using cached data for {month_key}"
                 )
-    
+                all_records.append(cached_df)
+                successful_months.append(month_key)
+                continue
+
+            # ---------------------------------------------------------
+            # No cache → download from AGMARKNET
+            # ---------------------------------------------------------
+            logger.info(
+                f"AGMARKNET: downloading {month_key}"
+            )
+
+            try:
                 response = self._get_with_retry(
                     url,
                     params,
                     max_retries=3,
                 )
-    
+
                 response.raise_for_status()
-    
+
                 raw = response.json()
-    
+
                 if not raw.get("success"):
                     logger.warning(
-                        f"AGMARKNET returned unsuccessful response for "
-                        f"{month_start.year}-{month_start.month:02d}"
+                        f"AGMARKNET returned unsuccessful response for {month_key}"
                     )
+                    failed_months.append(month_key)
                     continue
-    
+
                 month_df = self._parse_agmarknet_response(
                     raw,
                     state,
                 )
-    
-                if not month_df.empty:
-                    all_records.append(month_df)
-    
-            if not all_records:
-                raise ValueError(
-                    f"No AGMARKNET data found for "
-                    f"{crop} in {state} between "
-                    f"{start_date} and {end_date}"
+
+
+                logger.info(
+                    f"AGMARKNET: {month_key} → "
+                    f"{len(month_df)} market-level records"
+)
+
+                if month_df.empty:
+                    logger.warning(
+                        f"AGMARKNET returned no records for {month_key}"
+                    )
+                    failed_months.append(month_key)
+                    continue
+
+
+
+                self._save_agmarknet_cache(
+                    month_df,
+                    crop,
+                    state,
+                    year,
+                    month,
                 )
-    
-            market_df = pd.concat(
-                all_records,
-                ignore_index=True,
-            )
-    
-            # Keep only the requested date range.
-            market_df = market_df[
-                (market_df["date"] >= start)
-                & (market_df["date"] <= end)
-            ].copy()
-    
-            if market_df.empty:
-                raise ValueError(
-                    f"AGMARKNET returned no records inside "
-                    f"{start_date} - {end_date}"
+
+                all_records.append(month_df)
+                successful_months.append(month_key)
+
+
+
+            except Exception as e:
+                logger.warning(
+                    f"AGMARKNET failed for {month_key}: {e}"
                 )
-    
-            daily_df = self._aggregate_agmarknet_daily(
-                market_df
+                failed_months.append(month_key)
+
+        if not all_records:
+            empty_df = pd.DataFrame(
+                columns=[
+                    "date",
+                    "state",
+                    "arrivals_tonnes",
+                    "min_price",
+                    "max_price",
+                    "modal_price",
+                    "market_count",
+                ]
             )
-    
-            daily_df.attrs["data_source"] = "agmarknet"
-            daily_df.attrs["is_live"] = False
-            daily_df.attrs["is_historical"] = True
-    
-            logger.info(
-                f"AGMARKNET: {len(market_df)} market-level records → "
-                f"{len(daily_df)} daily records"
+
+            empty_df.attrs["data_source"] = "agmarknet_failed"
+            empty_df.attrs["is_live"] = False
+            empty_df.attrs["is_historical"] = True
+            empty_df.attrs["is_complete"] = False
+            empty_df.attrs["successful_months"] = successful_months
+            empty_df.attrs["failed_months"] = failed_months
+
+            return empty_df
+
+        market_df = pd.concat(
+            all_records,
+            ignore_index=True,
+        )
+
+        # Keep only the requested date range.
+        market_df = market_df[
+            (market_df["date"] >= start)
+            & (market_df["date"] <= end)
+        ].copy()
+
+        if market_df.empty:
+            raise ValueError(
+                f"AGMARKNET returned no records inside {start_date} - {end_date}"
             )
-    
-            return daily_df
+
+        daily_df = self._aggregate_agmarknet_daily(
+            market_df
+        )
+
+        daily_df.attrs["data_source"] = "agmarknet"
+        daily_df.attrs["is_live"] = False
+        daily_df.attrs["is_historical"] = True
+        daily_df.attrs["successful_months"] = successful_months
+        daily_df.attrs["failed_months"] = failed_months
+        daily_df.attrs["is_complete"] = len(failed_months) == 0
+
+        logger.info(
+            f"AGMARKNET: {len(market_df)} market-level records → "
+            f"{len(daily_df)} daily records"
+        )
+
+        return daily_df
     
 
     # ── Synthetic data generator ───────────────
