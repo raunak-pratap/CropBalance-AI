@@ -41,6 +41,61 @@ class MandiPriceFetcher:
 
         self.metadata_resolver = AgmarknetMetadataResolver()
 
+    def _get_with_retry(self, url, params, max_retries=3):
+        """GET request with exponential backoff for rate limits."""
+
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(
+                    url,
+                    params=params,
+                    timeout=30,
+                    headers={
+                        "User-Agent": "CropBalance-AI/1.0"
+                    },
+                )
+
+                if response.status_code == 429:
+                    retry_after = response.headers.get("Retry-After")
+
+                    if retry_after:
+                        wait_time = int(retry_after)
+                    else:
+                        wait_time = 2 ** attempt * 5
+
+                    logger.warning(
+                        f"AGMARKNET rate limited (429). "
+                        f"Retry {attempt + 1}/{max_retries} "
+                        f"after {wait_time}s"
+                    )
+
+                    if attempt < max_retries - 1:
+                        time.sleep(wait_time)
+                        continue
+
+                    raise requests.HTTPError(
+                        "AGMARKNET rate limit persisted after retries",
+                        response=response,
+                    )
+
+                response.raise_for_status()
+                return response
+
+            except requests.RequestException as e:
+                if attempt == max_retries - 1:
+                    raise
+
+                wait_time = 2 ** attempt * 2
+
+                logger.warning(
+                    f"AGMARKNET request failed: {e}. "
+                    f"Retrying in {wait_time}s..."
+                )
+
+                time.sleep(wait_time)
+
+        raise RuntimeError("AGMARKNET request failed")
+
     def fetch(
         self,
         crop: str,
@@ -81,22 +136,28 @@ class MandiPriceFetcher:
             )
 
         except Exception as e:
-            logger.warning(
-                f"AGMARKNET fetch failed: {e} "
-                "— falling back to synthetic data"
+            logger.error(
+                f"AGMARKNET fetch failed: {e}"
             )
 
-            df = self._generate_synthetic(
-                crop,
-                state,
-                start_date,
-                end_date,
+            empty_df = pd.DataFrame(
+                columns=[
+                    "date",
+                    "state",
+                    "arrivals_tonnes",
+                    "min_price",
+                    "max_price",
+                    "modal_price",
+                    "market_count",
+                ]
             )
 
-            df.attrs["data_source"] = "synthetic_fallback"
-            df.attrs["is_live"] = False
+            empty_df.attrs["data_source"] = "agmarknet_failed"
+            empty_df.attrs["is_live"] = False
+            empty_df.attrs["is_complete"] = False
+            empty_df.attrs["error"] = str(e)
 
-            return df
+            return empty_df
 
     # ── eNAM API ──────────────────────────────
     def _fetch_enam(self, crop, state, start_date, end_date) -> pd.DataFrame:
@@ -140,126 +201,127 @@ class MandiPriceFetcher:
 
     # ── Agmarknet ─────────────────────────────
     def _fetch_agmarknet(
-        self,
-        crop: str,
-        state: str,
-        start_date: str,
-        end_date: str,
-    ) -> pd.DataFrame:
-        """Fetch and normalize historical mandi prices from AGMARKNET."""
-
-        # Resolve human-readable names to AGMARKNET IDs dynamically.
-        try:
-            state_id = self.metadata_resolver.get_state_id(state)
-            commodity_id = self.metadata_resolver.get_commodity_id(crop)
-
-        except ValueError as e:
-            raise ValueError(
-                f"Could not resolve AGMARKNET IDs for "
-                f"{crop} / {state}: {e}"
-            ) from e
-
-        logger.info(
-            f"AGMARKNET IDs resolved: "
-            f"{crop}={commodity_id}, {state}={state_id}"
-        )
-
-        start = pd.to_datetime(start_date)
-        end = pd.to_datetime(end_date)
-
-        # Generate the months covering the requested date range.
-        month_starts = pd.date_range(
-            start=start.replace(day=1),
-            end=end.replace(day=1),
-            freq="MS",
-        )
-
-        all_records = []
-
-        for month_start in month_starts:
-
-            params = {
-                "year": month_start.year,
-                "month": month_start.month,
-                "includeExcel": "false",
-                "stateId": state_id,
-                "commodityId": commodity_id,
-            }
-
-            url = (
-                "https://api.agmarknet.gov.in/v1/"
-                "prices-and-arrivals/date-wise/"
-                "specific-commodity"
-            )
-
+            self,
+            crop: str,
+            state: str,
+            start_date: str,
+            end_date: str,
+        ) -> pd.DataFrame:
+            """Fetch and normalize historical mandi prices from AGMARKNET."""
+    
+            # Resolve human-readable names to AGMARKNET IDs dynamically.
+            try:
+                state_id = self.metadata_resolver.get_state_id(state)
+                commodity_id = self.metadata_resolver.get_commodity_id(crop)
+    
+            except ValueError as e:
+                raise ValueError(
+                    f"Could not resolve AGMARKNET IDs for "
+                    f"{crop} / {state}: {e}"
+                ) from e
+    
             logger.info(
-                f"AGMARKNET: fetching {crop} / {state} "
-                f"{month_start.year}-{month_start.month:02d}"
+                f"AGMARKNET IDs resolved: "
+                f"{crop}={commodity_id}, {state}={state_id}"
             )
-
-            response = self.session.get(
-                url,
-                params=params,
-                timeout=30,
+    
+            start = pd.to_datetime(start_date)
+            end = pd.to_datetime(end_date)
+    
+            # Generate the months covering the requested date range.
+            month_starts = pd.date_range(
+                start=start.replace(day=1),
+                end=end.replace(day=1),
+                freq="MS",
             )
-
-            response.raise_for_status()
-
-            raw = response.json()
-
-            if not raw.get("success"):
-                logger.warning(
-                    f"AGMARKNET returned unsuccessful response for "
+    
+            all_records = []
+    
+            for month_start in month_starts:
+    
+                params = {
+                    "year": month_start.year,
+                    "month": month_start.month,
+                    "includeExcel": "false",
+                    "stateId": state_id,
+                    "commodityId": commodity_id,
+                }
+    
+                url = (
+                    "https://api.agmarknet.gov.in/v1/"
+                    "prices-and-arrivals/date-wise/"
+                    "specific-commodity"
+                )
+    
+                logger.info(
+                    f"AGMARKNET: fetching {crop} / {state} "
                     f"{month_start.year}-{month_start.month:02d}"
                 )
-                continue
-
-            month_df = self._parse_agmarknet_response(
-                raw,
-                state,
+    
+                response = self._get_with_retry(
+                    url,
+                    params,
+                    max_retries=3,
+                )
+    
+                response.raise_for_status()
+    
+                raw = response.json()
+    
+                if not raw.get("success"):
+                    logger.warning(
+                        f"AGMARKNET returned unsuccessful response for "
+                        f"{month_start.year}-{month_start.month:02d}"
+                    )
+                    continue
+    
+                month_df = self._parse_agmarknet_response(
+                    raw,
+                    state,
+                )
+    
+                if not month_df.empty:
+                    all_records.append(month_df)
+    
+            if not all_records:
+                raise ValueError(
+                    f"No AGMARKNET data found for "
+                    f"{crop} in {state} between "
+                    f"{start_date} and {end_date}"
+                )
+    
+            market_df = pd.concat(
+                all_records,
+                ignore_index=True,
             )
-
-            if not month_df.empty:
-                all_records.append(month_df)
-
-        if not all_records:
-            raise ValueError(
-                f"No AGMARKNET data found for "
-                f"{crop} in {state} between "
-                f"{start_date} and {end_date}"
+    
+            # Keep only the requested date range.
+            market_df = market_df[
+                (market_df["date"] >= start)
+                & (market_df["date"] <= end)
+            ].copy()
+    
+            if market_df.empty:
+                raise ValueError(
+                    f"AGMARKNET returned no records inside "
+                    f"{start_date} - {end_date}"
+                )
+    
+            daily_df = self._aggregate_agmarknet_daily(
+                market_df
             )
-
-        market_df = pd.concat(
-            all_records,
-            ignore_index=True,
-        )
-
-        # Keep only the requested date range.
-        market_df = market_df[
-            (market_df["date"] >= start)
-            & (market_df["date"] <= end)
-        ].copy()
-
-        if market_df.empty:
-            raise ValueError(
-                f"AGMARKNET returned no records inside "
-                f"{start_date} - {end_date}"
+    
+            daily_df.attrs["data_source"] = "agmarknet"
+            daily_df.attrs["is_live"] = False
+            daily_df.attrs["is_historical"] = True
+    
+            logger.info(
+                f"AGMARKNET: {len(market_df)} market-level records → "
+                f"{len(daily_df)} daily records"
             )
-
-        daily_df = self._aggregate_agmarknet_daily(
-            market_df
-        )
-
-        daily_df.attrs["data_source"] = "agmarknet"
-        daily_df.attrs["is_live"] = False
-        daily_df.attrs["is_historical"] = True
-
-        logger.info(
-            f"AGMARKNET: {len(market_df)} market-level records → "
-            f"{len(daily_df)} daily records"
-        )
-
-        return daily_df
+    
+            return daily_df
+    
 
     # ── Synthetic data generator ───────────────
     def _generate_synthetic(
