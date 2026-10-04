@@ -16,6 +16,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from loguru import logger
 from typing import Optional
+from services.agmarknet_metadata import AgmarknetMetadataResolver
 
 from config import SUPPORTED_CROPS, API_CONFIG, PATH_CONFIG
 
@@ -38,6 +39,8 @@ class MandiPriceFetcher:
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": "SmartFarming/1.0"})
 
+        self.metadata_resolver = AgmarknetMetadataResolver()
+
     def fetch(
         self,
         crop: str,
@@ -56,17 +59,44 @@ class MandiPriceFetcher:
 
         if API_CONFIG.enam_api_key:
             logger.info(f"Fetching {crop} prices from eNAM API")
-            return self._fetch_enam(crop, state, start_date, end_date)
+            return self._fetch_enam(
+                crop,
+                state,
+                start_date,
+                end_date,
+            )
 
-        if API_CONFIG.agmarknet_api_key:
-            logger.info(f"Fetching {crop} prices from Agmarknet")
-            return self._fetch_agmarknet(crop, state, start_date, end_date)
+        # AGMARKNET historical endpoint does not use the old
+        # AGMARKNET_API_KEY configuration gate.
+        try:
+            logger.info(
+                f"Fetching {crop} prices from AGMARKNET historical endpoint"
+            )
 
-        logger.warning("No API keys found — using synthetic data generator")
-        df = self._generate_synthetic(crop, state, start_date, end_date)
-        df.attrs["data_source"] = "synthetic"
-        df.attrs["is_live"] = False
-        return df
+            return self._fetch_agmarknet(
+                crop,
+                state,
+                start_date,
+                end_date,
+            )
+
+        except Exception as e:
+            logger.warning(
+                f"AGMARKNET fetch failed: {e} "
+                "— falling back to synthetic data"
+            )
+
+            df = self._generate_synthetic(
+                crop,
+                state,
+                start_date,
+                end_date,
+            )
+
+            df.attrs["data_source"] = "synthetic_fallback"
+            df.attrs["is_live"] = False
+
+            return df
 
     # ── eNAM API ──────────────────────────────
     def _fetch_enam(self, crop, state, start_date, end_date) -> pd.DataFrame:
@@ -118,27 +148,21 @@ class MandiPriceFetcher:
     ) -> pd.DataFrame:
         """Fetch and normalize historical mandi prices from AGMARKNET."""
 
-        # AGMARKNET frontend IDs discovered from its filters.
-        STATE_IDS = {
-            "Punjab": 28,
-        }
+        # Resolve human-readable names to AGMARKNET IDs dynamically.
+        try:
+            state_id = self.metadata_resolver.get_state_id(state)
+            commodity_id = self.metadata_resolver.get_commodity_id(crop)
 
-        COMMODITY_IDS = {
-            "wheat": 1,
-        }
-
-        if state not in STATE_IDS:
+        except ValueError as e:
             raise ValueError(
-                f"AGMARKNET state ID not configured for: {state}"
-            )
+                f"Could not resolve AGMARKNET IDs for "
+                f"{crop} / {state}: {e}"
+            ) from e
 
-        if crop.lower() not in COMMODITY_IDS:
-            raise ValueError(
-                f"AGMARKNET commodity ID not configured for: {crop}"
-            )
-
-        state_id = STATE_IDS[state]
-        commodity_id = COMMODITY_IDS[crop.lower()]
+        logger.info(
+            f"AGMARKNET IDs resolved: "
+            f"{crop}={commodity_id}, {state}={state_id}"
+        )
 
         start = pd.to_datetime(start_date)
         end = pd.to_datetime(end_date)
