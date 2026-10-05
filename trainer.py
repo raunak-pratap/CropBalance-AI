@@ -196,6 +196,209 @@ class Trainer:
         logger.info(f"Test metrics: {metrics}")
         return metrics
 
+    def evaluate_naive_baseline(
+        self,
+        test_dl: DataLoader,
+        target_scaler=None,
+        target_index: int = 0,
+    ) -> Dict[str, float]:
+        """
+        Naive persistence baseline:
+        predict every future day using the last observed target price.
+        """
+
+        all_preds = []
+        all_targets = []
+
+        for X_batch, y_batch in test_dl:
+            # Use the actual target feature index instead of assuming index 0.
+            last_price_scaled = X_batch[:, -1, target_index]
+
+            horizon = y_batch.shape[1]
+
+            baseline = last_price_scaled.unsqueeze(1).repeat(1, horizon)
+
+            all_preds.append(baseline.cpu().numpy())
+            all_targets.append(y_batch.cpu().numpy())
+
+        preds = np.concatenate(all_preds)
+        targets = np.concatenate(all_targets)
+
+        if target_scaler is not None:
+            original_shape = preds.shape
+
+            preds = target_scaler.inverse_transform(
+                preds.reshape(-1, 1)
+            ).reshape(original_shape)
+
+            targets = target_scaler.inverse_transform(
+                targets.reshape(-1, 1)
+            ).reshape(original_shape)
+
+        metrics = compute_metrics(
+            targets.flatten(),
+            preds.flatten()
+        )
+
+        logger.info(f"Naive baseline metrics: {metrics}")
+
+        return metrics
+
+    def evaluate_seasonal_naive_baseline(
+        self,
+        test_dl: DataLoader,
+        target_scaler=None,
+        target_index: int = 0,
+        season_length: int = 7,
+    ) -> Dict[str, float]:
+        """
+        Seasonal-naive baseline.
+
+        Predict every future day using the target price observed
+        `season_length` days before the forecast origin.
+        """
+
+        if season_length > self.cfg.sequence_length:
+            raise ValueError(
+                f"season_length={season_length} cannot exceed "
+                f"sequence_length={self.cfg.sequence_length}"
+            )
+
+        all_preds = []
+        all_targets = []
+
+        for X_batch, y_batch in test_dl:
+            seasonal_price = X_batch[:, -season_length, target_index]
+
+            horizon = y_batch.shape[1]
+
+            baseline = seasonal_price.unsqueeze(1).repeat(
+                1, horizon
+            )
+
+            all_preds.append(baseline.cpu().numpy())
+            all_targets.append(y_batch.cpu().numpy())
+
+        preds = np.concatenate(all_preds)
+        targets = np.concatenate(all_targets)
+
+        if target_scaler is not None:
+            original_shape = preds.shape
+
+            preds = target_scaler.inverse_transform(
+                preds.reshape(-1, 1)
+            ).reshape(original_shape)
+
+            targets = target_scaler.inverse_transform(
+                targets.reshape(-1, 1)
+            ).reshape(original_shape)
+
+        metrics = compute_metrics(
+            targets.flatten(),
+            preds.flatten()
+        )
+
+        logger.info(
+            f"Seasonal-naive ({season_length}d) baseline metrics: "
+            f"{metrics}"
+        )
+
+        return metrics
+
+    def evaluate_horizons(
+        self,
+        test_dl: DataLoader,
+        target_scaler=None,
+        target_index: int = 0,
+    ) -> Dict[str, Dict[str, float]]:
+        """
+        Compare LSTM and naive persistence baseline at each
+        forecast horizon (Day 1 ... Day N).
+        """
+
+        self._load_checkpoint()
+
+        _, lstm_preds, targets = self._run_epoch(
+            test_dl,
+            train=False
+        )
+
+        # Naive baseline: last observed price repeated across horizon
+        naive_preds = []
+
+        for X_batch, y_batch in test_dl:
+            last_price_scaled = X_batch[:, -1, target_index]
+            horizon = y_batch.shape[1]
+
+            baseline = last_price_scaled.unsqueeze(1).repeat(
+                1, horizon
+            )
+
+            naive_preds.append(baseline.cpu().numpy())
+
+        naive_preds = np.concatenate(naive_preds)
+
+        # Convert scaled values back to ₹
+        if target_scaler is not None:
+            original_shape = lstm_preds.shape
+
+            lstm_preds = target_scaler.inverse_transform(
+                lstm_preds.reshape(-1, 1)
+            ).reshape(original_shape)
+
+            targets = target_scaler.inverse_transform(
+                targets.reshape(-1, 1)
+            ).reshape(original_shape)
+
+            naive_preds = target_scaler.inverse_transform(
+                naive_preds.reshape(-1, 1)
+            ).reshape(original_shape)
+
+        results = {}
+
+        for h in range(targets.shape[1]):
+            day = h + 1
+
+            lstm_metrics = compute_metrics(
+                targets[:, h],
+                lstm_preds[:, h]
+            )
+
+            naive_metrics = compute_metrics(
+                targets[:, h],
+                naive_preds[:, h]
+            )
+
+            results[f"day_{day}"] = {
+                "lstm_mae": lstm_metrics["mae"],
+                "naive_mae": naive_metrics["mae"],
+                "lstm_rmse": lstm_metrics["rmse"],
+                "naive_rmse": naive_metrics["rmse"],
+                "lstm_mape": lstm_metrics["mape"],
+                "naive_mape": naive_metrics["mape"],
+            }
+
+        logger.info("Horizon-wise evaluation:")
+        logger.info(
+            "Day | LSTM MAE | Naive MAE | "
+            "LSTM RMSE | Naive RMSE | LSTM MAPE | Naive MAPE"
+        )
+
+        for day, metrics in results.items():
+            day_num = day.replace("day_", "")
+
+            logger.info(
+                f"{day_num:>3} | "
+                f"{metrics['lstm_mae']:>9.2f} | "
+                f"{metrics['naive_mae']:>9.2f} | "
+                f"{metrics['lstm_rmse']:>10.2f} | "
+                f"{metrics['naive_rmse']:>10.2f} | "
+                f"{metrics['lstm_mape']:>9.2f}% | "
+                f"{metrics['naive_mape']:>10.2f}%"
+            )
+
+        return results
+
     # ── Checkpoint helpers ─────────────────────
     def _save_checkpoint(self, epoch: int, val_loss: float, metrics: dict):
         torch.save({

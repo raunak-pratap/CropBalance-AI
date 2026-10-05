@@ -174,10 +174,64 @@ def main():
     test_dl,
     target_scaler=scalers["modal_price"],
 )
+    logger.info("Evaluating naive persistence baseline...")
+
+    baseline_metrics = trainer.evaluate_naive_baseline(
+        test_dl,
+        target_scaler=scalers["modal_price"],
+    )
+
+    logger.info("Naive baseline metrics:")
+    logger.info(f"  MAE:  {baseline_metrics['mae']:.4f}")
+    logger.info(f"  RMSE: {baseline_metrics['rmse']:.4f}")
+    logger.info(f"  MAPE: {baseline_metrics['mape']:.2f}%")
+
+    logger.info("Model vs baseline:")
+
+    mae_improvement = (
+        (baseline_metrics["mae"] - test_metrics["mae"])
+        / baseline_metrics["mae"]
+    ) * 100
+
+    mape_improvement = (
+        (baseline_metrics["mape"] - test_metrics["mape"])
+        / baseline_metrics["mape"]
+    ) * 100
+
+    logger.info(f"  MAE improvement:  {mae_improvement:.2f}%")
+    logger.info(f"  MAPE improvement: {mape_improvement:.2f}%")
+    logger.info("=" * 60)
+    logger.info("HORIZON-WISE EVALUATION")
+    logger.info("=" * 60)
+
+    target_index = meta["feature_columns"].index("modal_price")
+
+    horizon_results = trainer.evaluate_horizons(
+        test_dl,
+        target_scaler=scalers["modal_price"],
+        target_index=target_index,
+    )
+    
     logger.info(f"Final test metrics:")
     logger.info(f"  MAE:  {test_metrics['mae']:.4f}")
     logger.info(f"  RMSE: {test_metrics['rmse']:.4f}")
     logger.info(f"  MAPE: {test_metrics['mape']:.2f}%")
+
+    logger.info("=" * 60)
+    logger.info("SEASONAL-NAIVE BASELINE")
+    logger.info("=" * 60)
+
+    seasonal_metrics = trainer.evaluate_seasonal_naive_baseline(
+        test_dl,
+        target_scaler=scalers["modal_price"],
+        target_index=target_index,
+        season_length=7,
+    )
+
+    logger.info("Seasonal-naive baseline:")
+    logger.info(f"  MAE:  {seasonal_metrics['mae']:.4f}")
+    logger.info(f"  RMSE: {seasonal_metrics['rmse']:.4f}")
+    logger.info(f"  MAPE: {seasonal_metrics['mape']:.2f}%")
 
     # ── Save plots ─────────────────────────────
     if not args.no_plot:
