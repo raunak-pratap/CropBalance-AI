@@ -166,11 +166,33 @@ class Trainer:
 
         return self.history
 
-    def evaluate(self, test_dl: DataLoader) -> Dict[str, float]:
+    def evaluate(
+        self,
+        test_dl: DataLoader,
+        target_scaler=None,
+    ) -> Dict[str, float]:
         """Evaluate on test set using best saved checkpoint."""
+
         self._load_checkpoint()
         _, preds, targets = self._run_epoch(test_dl, train=False)
-        metrics = compute_metrics(targets.flatten(), preds.flatten())
+
+        # Convert scaled predictions/targets back to original price units
+        if target_scaler is not None:
+            original_shape = preds.shape
+
+            preds = target_scaler.inverse_transform(
+                preds.reshape(-1, 1)
+            ).reshape(original_shape)
+
+            targets = target_scaler.inverse_transform(
+                targets.reshape(-1, 1)
+            ).reshape(original_shape)
+
+        metrics = compute_metrics(
+            targets.flatten(),
+            preds.flatten()
+        )
+
         logger.info(f"Test metrics: {metrics}")
         return metrics
 

@@ -16,6 +16,7 @@ The script will:
 """
 
 import argparse
+from curses import meta
 import os
 import sys
 import matplotlib
@@ -33,16 +34,56 @@ from trainer import Trainer
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train Crop Price LSTM")
-    parser.add_argument("--crop",  type=str, default="wheat",
-                        choices=SUPPORTED_CROPS, help="Crop to train")
-    parser.add_argument("--state", type=str, default="Punjab",
-                        help="Indian state for mandi data")
-    parser.add_argument("--years", type=int, default=5,
-                        help="Years of historical data to use")
-    parser.add_argument("--epochs", type=int, default=None,
-                        help="Override config epochs")
-    parser.add_argument("--no-plot", action="store_true",
-                        help="Skip saving training curves")
+
+    parser.add_argument(
+        "--crop",
+        type=str,
+        default="wheat",
+        choices=SUPPORTED_CROPS,
+        help="Crop to train"
+    )
+
+    parser.add_argument(
+        "--state",
+        type=str,
+        default="Punjab",
+        help="Indian state for mandi data"
+    )
+
+    parser.add_argument(
+        "--years",
+        type=int,
+        default=5,
+        help="Years of historical data to use if explicit dates are not provided"
+    )
+
+    parser.add_argument(
+        "--start-date",
+        type=str,
+        default=None,
+        help="Start date YYYY-MM-DD"
+    )
+
+    parser.add_argument(
+        "--end-date",
+        type=str,
+        default=None,
+        help="End date YYYY-MM-DD"
+    )
+
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=None,
+        help="Override config epochs"
+    )
+
+    parser.add_argument(
+        "--no-plot",
+        action="store_true",
+        help="Skip saving training curves"
+    )
+
     return parser.parse_args()
 
 
@@ -88,8 +129,14 @@ def main():
     if args.epochs:
         LSTM_CONFIG.epochs = args.epochs
 
-    end_date   = datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.now() - timedelta(days=args.years * 365)).strftime("%Y-%m-%d")
+    if args.start_date and args.end_date:
+        start_date = args.start_date
+        end_date = args.end_date
+    else:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (
+            datetime.now() - timedelta(days=args.years * 365)
+        ).strftime("%Y-%m-%d")
 
     logger.info("=" * 60)
     logger.info(f"Smart Farming — Crop Price Prediction")
@@ -113,6 +160,7 @@ def main():
         price_df, weather_df, crop=args.crop
     )
     n_features = meta["n_features"]
+    scalers = meta["scalers"]
 
     # ── 3. Train ───────────────────────────────
     logger.info("Step 3/4: Training LSTM...")
@@ -122,7 +170,10 @@ def main():
 
     # ── 4. Evaluate ────────────────────────────
     logger.info("Step 4/4: Evaluating on test set...")
-    test_metrics = trainer.evaluate(test_dl)
+    test_metrics = trainer.evaluate(
+    test_dl,
+    target_scaler=scalers["modal_price"],
+)
     logger.info(f"Final test metrics:")
     logger.info(f"  MAE:  {test_metrics['mae']:.4f}")
     logger.info(f"  RMSE: {test_metrics['rmse']:.4f}")

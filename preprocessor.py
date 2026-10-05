@@ -158,37 +158,95 @@ class CropPriceDataset(Dataset):
 
 def make_dataloaders(
     df_scaled: pd.DataFrame,
-    cfg=LSTM_CONFIG,
+    cfg_copy=None,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    """
-    Builds train / val / test DataLoaders from the scaled DataFrame.
-    Uses chronological (non-shuffled) split to avoid data leakage.
-    """
-    X, y = build_sequences(
-        df_scaled,
-        cfg.feature_columns,
-        cfg.target_column,
-        cfg.sequence_length,
-        cfg.forecast_horizon,
+
+    if cfg_copy is None:
+        cfg_copy = copy.deepcopy(LSTM_CONFIG)
+
+    feature_cols = cfg_copy.feature_columns
+    target_col = cfg_copy.target_column
+    seq_len = cfg_copy.sequence_length
+    horizon = cfg_copy.forecast_horizon
+
+    n = len(df_scaled)
+
+    # Split RAW timeline first
+    n_train = int(n * cfg_copy.train_split)
+    n_val = int(n * cfg_copy.val_split)
+
+    train_end = n_train
+    val_end = n_train + n_val
+
+    # Build sequences separately.
+    # Validation/test receive historical context but their TARGETS
+    # remain completely inside their own split.
+
+    train_df = df_scaled.iloc[:train_end]
+
+    val_start = max(0, train_end - seq_len)
+    val_df = df_scaled.iloc[val_start:val_end]
+
+    test_start = max(0, val_end - seq_len)
+    test_df = df_scaled.iloc[test_start:]
+
+    X_train, y_train = build_sequences(
+        train_df,
+        feature_cols,
+        target_col,
+        seq_len,
+        horizon,
     )
 
-    n = len(X)
-    n_train = int(n * cfg.train_split)
-    n_val   = int(n * cfg.val_split)
+    X_val_full, y_val_full = build_sequences(
+        val_df,
+        feature_cols,
+        target_col,
+        seq_len,
+        horizon,
+    )
 
-    X_train, y_train = X[:n_train],          y[:n_train]
-    X_val,   y_val   = X[n_train:n_train+n_val], y[n_train:n_train+n_val]
-    X_test,  y_test  = X[n_train+n_val:],    y[n_train+n_val:]
+    X_test_full, y_test_full = build_sequences(
+        test_df,
+        feature_cols,
+        target_col,
+        seq_len,
+        horizon,
+    )
 
-    logger.info(f"Sequences → train: {len(X_train)}, val: {len(X_val)}, test: {len(X_test)}")
+    # Because validation/test contain `seq_len` days of historical
+    # context, the first generated target belongs to that split.
+    X_val, y_val = X_val_full, y_val_full
+    X_test, y_test = X_test_full, y_test_full
+
+    logger.info(
+        f"Leakage-safe sequences → "
+        f"train: {len(X_train)}, "
+        f"val: {len(X_val)}, "
+        f"test: {len(X_test)}"
+    )
 
     train_ds = CropPriceDataset(X_train, y_train)
-    val_ds   = CropPriceDataset(X_val,   y_val)
-    test_ds  = CropPriceDataset(X_test,  y_test)
+    val_ds = CropPriceDataset(X_val, y_val)
+    test_ds = CropPriceDataset(X_test, y_test)
 
-    train_dl = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=False)
-    val_dl   = DataLoader(val_ds,   batch_size=cfg.batch_size, shuffle=False)
-    test_dl  = DataLoader(test_ds,  batch_size=cfg.batch_size, shuffle=False)
+    train_dl = DataLoader(
+        train_ds,
+        batch_size=cfg_copy.batch_size,
+        shuffle=False,
+    )
+
+    val_dl = DataLoader(
+        val_ds,
+        batch_size=cfg_copy.batch_size,
+        shuffle=False,
+    )
+
+    test_dl = DataLoader(
+        test_ds,
+        batch_size=cfg_copy.batch_size,
+        shuffle=False,
+    )
 
     return train_dl, val_dl, test_dl
 
