@@ -4,6 +4,7 @@ from agent.tools import (
     detect_disease,
     predict_price,
     get_weather,
+    get_agriculture_advice,
 )
 
 
@@ -13,6 +14,7 @@ def _execute_tool(
     image_path: str | None = None,
     crop: str | None = None,
     state: str | None = None,
+    disease_result: Dict | None = None,
 ) -> Dict:
     """Execute one CropBalance tool."""
 
@@ -82,6 +84,32 @@ def _execute_tool(
             "result": result,
         }
 
+
+    if tool == "get_agriculture_advice":
+        disease_result = disease_result or {}
+        disease = disease_result.get("disease")
+        confidence = disease_result.get("confidence")
+
+        result = get_agriculture_advice(
+            disease=disease,
+            confidence=confidence,
+        )
+
+        if result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": result.get(
+                    "message",
+                    "Agriculture advice could not be generated.",
+                ),
+                "result": None,
+            }
+
+        return {
+            "status": "success",
+            "result": result,
+        }
+
     return {
         "status": "unsupported",
         "message": f"Unknown tool: {tool}",
@@ -121,6 +149,7 @@ def execute_plan(
 
     results = {}
     errors = {}
+    disease_result = None
 
     for tool in tools:
         try:
@@ -130,10 +159,14 @@ def execute_plan(
                 image_path=image_path,
                 crop=crop,
                 state=state,
+                disease_result=disease_result,
             )
 
             if execution["status"] == "success":
                 results[tool] = execution["result"]
+
+                if tool == "detect_disease":
+                    disease_result = execution["result"]
             else:
                 errors[tool] = {
                     "status": execution["status"],
