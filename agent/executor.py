@@ -86,9 +86,24 @@ def _execute_tool(
 
 
     if tool == "get_agriculture_advice":
+        # Advice must be grounded in an actual disease result.
+        # Never invent disease-specific treatment when image analysis
+        # has not completed successfully.
         disease_result = disease_result or {}
         disease = disease_result.get("disease")
         confidence = disease_result.get("confidence")
+
+        if not disease:
+            return {
+                "status": "missing_input",
+                "missing": ["disease_detection"],
+                "message": (
+                    "Disease-specific advice requires a successful "
+                    "disease detection first. Please upload a clear "
+                    "image of the affected crop leaf."
+                ),
+                "result": None,
+            }
 
         result = get_agriculture_advice(
             disease=disease,
