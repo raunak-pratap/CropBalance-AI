@@ -95,6 +95,32 @@ def main():
     )
 
     logger.info("=" * 60)
+    logger.info("7-DAY SEASONAL NAIVE — HORIZON-WISE")
+    logger.info("=" * 60)
+
+    seasonal_horizon_results = trainer.evaluate_seasonal_naive_horizons(
+        test_dl,
+        target_scaler=target_scaler,
+        target_index=target_index,
+        season_length=7,
+    )
+
+    logger.info(
+        f"{'Day':>5} "
+        f"{'MAE':>12} "
+        f"{'RMSE':>12} "
+        f"{'MAPE':>12}"
+    )
+
+    for day, metrics in seasonal_horizon_results.items():
+        logger.info(
+            f"{day:>5} "
+            f"₹{metrics['mae']:>10.2f} "
+            f"₹{metrics['rmse']:>10.2f} "
+            f"{metrics['mape']:>10.2f}%"
+        )
+
+    logger.info("=" * 60)
     logger.info("LSTM")
     logger.info("=" * 60)
 

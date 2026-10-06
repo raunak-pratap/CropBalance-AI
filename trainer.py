@@ -252,55 +252,77 @@ class Trainer:
         season_length: int = 7,
     ) -> Dict[str, float]:
         """
-        Seasonal-naive baseline.
+        Evaluate a true horizon-wise seasonal naive baseline.
 
-        Predict every future day using the target price observed
-        `season_length` days before the forecast origin.
+        For a 7-day season:
+            Day 1 forecast -> price from 7 days ago
+            Day 2 forecast -> price from 6 days ago
+            ...
+            Day 7 forecast -> latest observed price
+            Day 8 forecast -> repeat Day 1 seasonal position
+            ...
         """
 
         if season_length > self.cfg.sequence_length:
             raise ValueError(
-                f"season_length={season_length} cannot exceed "
-                f"sequence_length={self.cfg.sequence_length}"
+                f"season_length ({season_length}) cannot exceed "
+                f"sequence_length ({self.cfg.sequence_length})"
             )
 
         all_preds = []
         all_targets = []
 
         for X_batch, y_batch in test_dl:
-            seasonal_price = X_batch[:, -season_length, target_index]
+
+            # Last 7 observed target values.
+            # Shape: [batch, 7]
+            seasonal_history = X_batch[
+                :, -season_length:, target_index
+            ]
 
             horizon = y_batch.shape[1]
 
-            baseline = seasonal_price.unsqueeze(1).repeat(
-                1, horizon
+            # Horizon-wise seasonal naive prediction.
+            #
+            # h=0 -> oldest value in the 7-day window
+            # h=1 -> next value
+            # ...
+            # h=6 -> latest observed value
+            # h=7 -> repeat oldest value
+            seasonal_preds = torch.stack(
+                [
+                    seasonal_history[:, h % season_length]
+                    for h in range(horizon)
+                ],
+                dim=1,
             )
 
-            all_preds.append(baseline.cpu().numpy())
+            all_preds.append(seasonal_preds.cpu().numpy())
             all_targets.append(y_batch.cpu().numpy())
 
-        preds = np.concatenate(all_preds)
-        targets = np.concatenate(all_targets)
+        preds = np.concatenate(all_preds, axis=0)
+        targets = np.concatenate(all_targets, axis=0)
 
+        # Convert scaled values back to INR.
         if target_scaler is not None:
-            original_shape = preds.shape
-
             preds = target_scaler.inverse_transform(
                 preds.reshape(-1, 1)
-            ).reshape(original_shape)
+            ).reshape(preds.shape)
 
             targets = target_scaler.inverse_transform(
                 targets.reshape(-1, 1)
-            ).reshape(original_shape)
+            ).reshape(targets.shape)
 
         metrics = compute_metrics(
             targets.flatten(),
-            preds.flatten()
+            preds.flatten(),
         )
 
         logger.info(
-            f"Seasonal-naive ({season_length}d) baseline metrics: "
-            f"{metrics}"
+            f"Seasonal naive ({season_length}d) | "
+            f"MAE: ₹{metrics['mae']:.2f} | "
+            f"RMSE: ₹{metrics['rmse']:.2f} | "
+            f"MAPE: {metrics['mape']:.2f}%"
         )
 
         return metrics
@@ -395,6 +417,78 @@ class Trainer:
                 f"{metrics['naive_rmse']:>10.2f} | "
                 f"{metrics['lstm_mape']:>9.2f}% | "
                 f"{metrics['naive_mape']:>10.2f}%"
+            )
+
+        return results
+
+    def evaluate_seasonal_naive_horizons(
+        self,
+        test_dl: DataLoader,
+        target_scaler=None,
+        target_index: int = 0,
+        season_length: int = 7,
+    ) -> Dict[int, Dict[str, float]]:
+        """
+        Evaluate seasonal-naive performance separately for
+        every forecast horizon.
+        """
+
+        if season_length > self.cfg.sequence_length:
+            raise ValueError(
+                f"season_length ({season_length}) cannot exceed "
+                f"sequence_length ({self.cfg.sequence_length})"
+            )
+
+        all_preds = []
+        all_targets = []
+
+        for X_batch, y_batch in test_dl:
+
+            seasonal_history = X_batch[
+                :, -season_length:, target_index
+            ]
+
+            horizon = y_batch.shape[1]
+
+            seasonal_preds = torch.stack(
+                [
+                    seasonal_history[:, h % season_length]
+                    for h in range(horizon)
+                ],
+                dim=1,
+            )
+
+            all_preds.append(seasonal_preds.cpu().numpy())
+            all_targets.append(y_batch.cpu().numpy())
+
+        preds = np.concatenate(all_preds, axis=0)
+        targets = np.concatenate(all_targets, axis=0)
+
+        # Inverse transform.
+        if target_scaler is not None:
+            preds = target_scaler.inverse_transform(
+                preds.reshape(-1, 1)
+            ).reshape(preds.shape)
+
+            targets = target_scaler.inverse_transform(
+                targets.reshape(-1, 1)
+            ).reshape(targets.shape)
+
+        results = {}
+
+        for h in range(preds.shape[1]):
+            metrics = compute_metrics(
+                targets[:, h],
+                preds[:, h],
+            )
+
+            results[h + 1] = metrics
+
+            logger.info(
+                f"Seasonal Naive Day {h + 1:02d} | "
+                f"MAE: ₹{metrics['mae']:.2f} | "
+                f"RMSE: ₹{metrics['rmse']:.2f} | "
+                f"MAPE: {metrics['mape']:.2f}%"
             )
 
         return results
