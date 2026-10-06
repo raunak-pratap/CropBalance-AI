@@ -82,14 +82,35 @@ class CropBalanceAgent:
             state=state,
         )
 
-                # 6. Handle execution failures
+       # 6. Handle execution failures
+        errors = execution.get("errors", {})
+
+        all_missing = bool(errors) and all(
+            error.get("status") == "missing_input"
+            for error in errors.values()
+        )
+
+        if execution["status"] == "error" and all_missing:
+            return {
+                "status": "missing_input",
+                "plan": plan,
+                "parsed": parsed,
+                "result": execution.get("result", {}),
+                "errors": errors,
+                "message": (
+                    "📷 Please upload a clear image of the affected crop leaf. "
+                    "I need the image to identify the disease before providing "
+                    "disease-specific treatment advice."
+                ),
+            }
+
         if execution["status"] == "error":
             return {
                 "status": "error",
                 "plan": plan,
                 "parsed": parsed,
                 "result": execution.get("result", {}),
-                "errors": execution.get("errors", {}),
+                "errors": errors,
             }
 
         # 7. Handle missing input from a single-tool request
