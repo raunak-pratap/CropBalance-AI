@@ -80,6 +80,20 @@ def build_response(
             f"({confidence_text})."
         )
 
+    if "get_agriculture_advice" in verified_results:
+        data = verified_results["get_agriculture_advice"]["result"]
+
+        severity = data.get("severity", "unknown")
+        treatment_en = data.get("treatment_en", "")
+        treatment_hi = data.get("treatment_hi", "")
+
+        sections.append(
+            f"🩺 Agriculture advice ({severity} severity): "
+            f"{treatment_en}\n"
+            f"🇮🇳 Hindi: {treatment_hi}\n"
+            f"⚠️ {data.get('disclaimer', '')}"
+        )
+
     if errors:
         for tool, error in errors.items():
             message = error.get(
