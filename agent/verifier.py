@@ -88,6 +88,38 @@ def verify_result(tool: str, result: Dict) -> Dict:
             },
         }
 
+    if tool == "get_agriculture_advice":
+        advice_status = result.get("status")
+        treatment_en = result.get("treatment_en")
+        treatment_hi = result.get("treatment_hi")
+
+        issues = []
+
+        if advice_status != "success":
+            issues.append("Agriculture advice was not generated successfully.")
+
+        if not treatment_en:
+            issues.append("Agriculture advice contains no English treatment guidance.")
+
+        if not treatment_hi:
+            issues.append("Agriculture advice contains no Hindi treatment guidance.")
+
+        if issues:
+            return {
+                "valid": False,
+                "issues": issues,
+            }
+
+        return {
+            "valid": True,
+            "issues": [],
+            "checks": {
+                "advice_present": True,
+                "severity": result.get("severity", "unknown"),
+                "source": result.get("source", "unknown"),
+            },
+        }
+
     return {
         "valid": False,
         "issues": [f"No verifier exists for tool: {tool}"],
