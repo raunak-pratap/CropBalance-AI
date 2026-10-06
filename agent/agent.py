@@ -18,7 +18,13 @@ class CropBalanceAgent:
     def __init__(self):
         self.pending_request = None
 
-    def _complete_pending_request(self, request: str) -> Dict | None:
+    def _complete_pending_request(
+        self,
+        request: str,
+        image_path: str | None = None,
+        crop: str | None = None,
+        state: str | None = None,
+    ) -> Dict | None:
         """Try to complete a previously incomplete request."""
 
         if not self.pending_request:
@@ -28,18 +34,32 @@ class CropBalanceAgent:
 
         pending = self.pending_request
 
-        crop = pending.get("crop") or parsed.get("crop")
-        state = pending.get("state") or parsed.get("state")
+        resolved_crop = pending.get("crop") or parsed.get("crop") or crop
+        resolved_state = pending.get("state") or parsed.get("state") or state
 
         if pending["intent"] == "price_prediction":
-            if crop and state:
+            if resolved_crop and resolved_state:
                 self.pending_request = None
 
                 return {
                     "intent": "price_prediction",
                     "intents": ["price_prediction"],
-                    "crop": crop,
-                    "state": state,
+                    "crop": resolved_crop,
+                    "state": resolved_state,
+                }
+
+        if pending["intent"] == "disease_detection":
+            if image_path:
+                self.pending_request = None
+
+                return {
+                    "intent": "disease_detection",
+                    "intents": [
+                        "disease_detection",
+                        "agriculture_advice",
+                    ],
+                    "crop": resolved_crop,
+                    "state": resolved_state,
                 }
 
         return None
@@ -53,13 +73,24 @@ class CropBalanceAgent:
     ) -> Dict:
 
         # 1. Try to complete a previous request first
-        completed = self._complete_pending_request(request)
+        completed = self._complete_pending_request(
+            request=request,
+            image_path=image_path,
+            crop=crop,
+            state=state,
+        )
 
         if completed:
             parsed = completed
         else:
-            # 2. Parse the new request
             parsed = parse_request(request)
+
+            if (
+                self.pending_request
+                and parsed.get("intent") != self.pending_request.get("intent")
+                and parsed.get("intent") != "unknown"
+            ):
+                self.pending_request = None
 
         # 3. Create an execution plan
         plan = plan_request(parsed)
@@ -91,6 +122,17 @@ class CropBalanceAgent:
         )
 
         if execution["status"] == "error" and all_missing:
+
+            if parsed["intent"] == "disease_detection":
+                self.pending_request = {
+                    "intent": parsed["intent"],
+                    "intents": parsed.get("intents", []),
+                    "crop": crop or parsed.get("crop"),
+                    "state": state or parsed.get("state"),
+                    "missing": ["image"],
+                }
+
+
             return {
                 "status": "missing_input",
                 "plan": plan,
@@ -115,7 +157,10 @@ class CropBalanceAgent:
 
         # 7. Handle missing input from a single-tool request
         if execution["status"] == "missing_input":
-            if parsed["intent"] == "price_prediction":
+            if parsed["intent"] in [
+                "price_prediction",
+                "disease_detection",
+            ]:
                 self.pending_request = {
                     "intent": parsed["intent"],
                     "crop": crop or parsed.get("crop"),
