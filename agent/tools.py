@@ -3,11 +3,13 @@ from typing import Dict
 from services.disease_service import DiseaseService
 from services.price_service import PriceService
 from services.weather_service import WeatherService
+from services.agriculture_advice_service import AgricultureAdviceService
 
 
 _disease_service = None
 _price_service = None
 _weather_service = None
+_agriculture_advice_service = None
 
 
 def _get_disease_service() -> DiseaseService:
@@ -78,4 +80,27 @@ def get_weather(
     return service.get_weather(
         state=state,
         days_history=days_history,
+    )
+
+def _get_agriculture_advice_service() -> AgricultureAdviceService:
+    global _agriculture_advice_service
+
+    if _agriculture_advice_service is None:
+        _agriculture_advice_service = AgricultureAdviceService()
+
+    return _agriculture_advice_service
+
+
+def get_agriculture_advice(
+    disease: str | None = None,
+    confidence: float | None = None,
+) -> Dict:
+    """
+    Get disease-specific agriculture advice from CropBalance metadata.
+    """
+    service = _get_agriculture_advice_service()
+
+    return service.get_advice(
+        disease=disease,
+        confidence=confidence,
     )
