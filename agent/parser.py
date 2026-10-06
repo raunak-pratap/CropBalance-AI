@@ -141,6 +141,22 @@ def extract_intents(text: str) -> list[str]:
         "climate",
     ]
 
+    advice_keywords = [
+        "what should i do",
+        "what can i do",
+        "how should i treat",
+        "how can i treat",
+        "treatment",
+        "treat",
+        "solution",
+        "remedy",
+        "advice",
+        "recommend",
+        "recommendation",
+        "medicine",
+        "pesticide",
+    ]
+
     if any(keyword in text for keyword in disease_keywords):
         intents.append("disease_detection")
 
@@ -149,6 +165,9 @@ def extract_intents(text: str) -> list[str]:
 
     if any(keyword in text for keyword in weather_keywords):
         intents.append("weather")
+
+    if any(keyword in text for keyword in advice_keywords):
+        intents.append("agriculture_advice")
 
     if not intents:
         intents.append("unknown")

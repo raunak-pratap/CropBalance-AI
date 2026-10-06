@@ -5,6 +5,7 @@ INTENT_TO_TOOL = {
     "disease_detection": "detect_disease",
     "price_prediction": "predict_price",
     "weather": "get_weather",
+    "agriculture_advice": "get_agriculture_advice",
 }
 
 
