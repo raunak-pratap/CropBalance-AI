@@ -132,6 +132,34 @@ class CropBalanceAgent:
                     "missing": ["image"],
                 }
 
+                message = (
+                    "📷 Please upload a clear image of the affected crop leaf. "
+                    "I need the image to identify the disease before providing "
+                    "disease-specific treatment advice."
+                )
+
+            else:
+                message = next(
+                    (
+                        error.get("message")
+                        for error in errors.values()
+                        if error.get("status") == "missing_input"
+                    ),
+                    "Please provide the missing information.",
+                )
+
+            if parsed["intent"] == "price_prediction":
+                self.pending_request = {
+                    "intent": parsed["intent"],
+                    "intents": parsed.get("intents", []),
+                    "crop": crop or parsed.get("crop"),
+                    "state": state or parsed.get("state"),
+                    "missing": [
+                        missing
+                        for error in errors.values()
+                        for missing in error.get("missing", [])
+                    ],
+                }
 
             return {
                 "status": "missing_input",
@@ -139,11 +167,7 @@ class CropBalanceAgent:
                 "parsed": parsed,
                 "result": execution.get("result", {}),
                 "errors": errors,
-                "message": (
-                    "📷 Please upload a clear image of the affected crop leaf. "
-                    "I need the image to identify the disease before providing "
-                    "disease-specific treatment advice."
-                ),
+                "message": message,
             }
 
         if execution["status"] == "error":
@@ -156,25 +180,31 @@ class CropBalanceAgent:
             }
 
         # 7. Handle missing input from a single-tool request
+
         if execution["status"] == "missing_input":
+
             if parsed["intent"] in [
                 "price_prediction",
                 "disease_detection",
             ]:
                 self.pending_request = {
                     "intent": parsed["intent"],
+                    "intents": parsed.get("intents", []),
                     "crop": crop or parsed.get("crop"),
                     "state": state or parsed.get("state"),
-                    "missing": execution["missing"],
+                    "missing": execution.get("missing", []),
                 }
 
             return {
                 "status": "missing_input",
                 "plan": plan,
                 "parsed": parsed,
-                "result": execution.get("result"),
+                "result": execution.get("result", {}),
                 "missing": execution.get("missing", []),
-                "message": execution.get("message"),
+                "message": execution.get(
+                    "message",
+                    "Please provide the missing information.",
+                ),
             }
 
         # 8. Verify every successful tool result
