@@ -34,7 +34,7 @@ class PriceService:
         self,
         crop: str,
         state: str,
-        days_history: int = 90,
+        days_history: int = 120,
     ) -> Dict:
         """
         Generate a future crop-price forecast.
