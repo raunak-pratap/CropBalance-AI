@@ -5,6 +5,7 @@ from agent.parser import parse_request
 from agent.executor import execute_plan
 from agent.verifier import verify_result
 from agent.response import build_response
+from agent.context.memory import ContextStore
 
 
 class CropBalanceAgent:
@@ -17,6 +18,7 @@ class CropBalanceAgent:
 
     def __init__(self):
         self.pending_request = None
+        self.context_store = ContextStore()
 
     def _complete_pending_request(
         self,
@@ -64,13 +66,48 @@ class CropBalanceAgent:
 
         return None
 
+    def _update_farmer_context(
+        self,
+        farmer_id: str | None,
+        crop: str | None = None,
+        state: str | None = None,
+    ) -> None:
+        if not farmer_id:
+            return
+
+        context = self.context_store.get(farmer_id)
+
+        if context is None:
+            from agent.context.models import FarmerContext
+
+            context = FarmerContext(
+                farmer_id=farmer_id,
+                state=state,
+                current_crop=crop,
+            )
+
+            self.context_store.save(context)
+            return
+
+        self.context_store.update(
+            farmer_id,
+            current_crop=crop,
+            state=state,
+        )
+
     def run(
         self,
         request: str,
         image_path: str | None = None,
         crop: str | None = None,
         state: str | None = None,
+        farmer_id: str | None = None,
     ) -> Dict:
+
+        farmer_context = None
+
+        if farmer_id:
+            farmer_context = self.context_store.get(farmer_id)
 
         # 1. Try to complete a previous request first
         completed = self._complete_pending_request(
@@ -91,6 +128,23 @@ class CropBalanceAgent:
                 and parsed.get("intent") != "unknown"
             ):
                 self.pending_request = None
+
+        # 2. Resolve missing values from farmer context
+        resolved_crop = parsed.get("crop") or crop
+        resolved_state = parsed.get("state") or state
+
+        if farmer_context:
+            resolved_crop = resolved_crop or farmer_context.current_crop
+            resolved_state = resolved_state or farmer_context.state
+
+        if resolved_crop:
+            parsed["crop"] = resolved_crop
+
+        if resolved_state:
+            parsed["state"] = resolved_state
+
+        crop = resolved_crop
+        state = resolved_state
 
         # 3. Create an execution plan
         plan = plan_request(parsed)
@@ -113,7 +167,7 @@ class CropBalanceAgent:
             state=state,
         )
 
-       # 6. Handle execution failures
+        # 6. Handle execution failures
         errors = execution.get("errors", {})
 
         all_missing = bool(errors) and all(
@@ -247,10 +301,17 @@ class CropBalanceAgent:
             }
 
         # 11. Everything executed and verified successfully
+
+        self._update_farmer_context(
+            farmer_id=farmer_id,
+            crop=parsed.get("crop"),
+            state=parsed.get("state"),
+        )
+
         response = build_response(
-        verified_results=verified_results,
-        status="success",
-        errors=execution.get("errors", {}),
+            verified_results=verified_results,
+            status="success",
+            errors=execution.get("errors", {}),
         )
 
         return {
@@ -262,5 +323,3 @@ class CropBalanceAgent:
             "errors": execution.get("errors", {}),
             "verification_errors": verification_errors,
         }
-
-        
