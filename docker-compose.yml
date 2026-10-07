@@ -8,7 +8,7 @@ services:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
-      - DATABASE_URL=postgresql://cropbalance:cropbalance_pass@postgres:5432/cropbalance_db
+      - DATABASE_URL=postgresql+psycopg2://cropbalance:cropbalance_pass@postgres:5432/cropbalance_db
       - REDIS_URL=redis://redis:6379/0
       - LOG_LEVEL=INFO
     env_file:
