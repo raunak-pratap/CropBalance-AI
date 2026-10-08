@@ -1,15 +1,18 @@
-from agent.context.models import FarmerContext
 from agent.context.postgres_memory import PostgresContextStore
+from agent.context.models import FarmerContext
 
 store = PostgresContextStore()
 
-context = FarmerContext(
-    farmer_id="farmer_002",
-    state="Maharashtra",
-    district="Pune",
-    current_crop="wheat",
-    land_size=3.0,
-    soil_type="black_soil",
+new_context = FarmerContext(
+    farmer_id="farmer_ramu",
+    state="Karnataka",
+    district="Bangalore",
+    current_crop="Wheat",
+    land_size=2.5,
+    soil_type="Loamy",
 )
 
-store.save(context)
+store.save(new_context)
+
+print("Saved context for farmer_ramu.")
+print(new_context)

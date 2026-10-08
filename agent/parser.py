@@ -18,6 +18,19 @@ CROPS = [
 STATES = [
     "Andhra Pradesh",
     "Bihar",
+    "Chhattisgarh",
+    "Chennai",
+    "Delhi",
+    "Goa",
+    "Telangana",
+    "Jharkhand",
+    "Jammu and Kashmir",
+    "Nagaland",
+    "Assam",
+    "Arunachal Pradesh",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
     "Gujarat",
     "Haryana",
     "Karnataka",
@@ -27,6 +40,23 @@ STATES = [
     "Punjab",
     "Rajasthan",
     "Uttar Pradesh",
+]
+
+farm_context_keywords = [
+    "my farm",
+    "my farm details",
+    "my farm information",
+    "my land",
+    "my soil",
+    "my soil type",
+    "my crop",
+    "my current crop",
+    "current crop",
+    "my location",
+    "my state",
+    "my district",
+    "farm details",
+    "farmer details",
 ]
 
 
@@ -102,6 +132,9 @@ def extract_intent(text: str) -> str:
     if any(keyword in text for keyword in weather_keywords):
         return "weather"
 
+    if any(keyword in text for keyword in farm_context_keywords):
+        return "farm_context"
+
     return "unknown"
 
 def extract_intents(text: str) -> list[str]:
@@ -168,6 +201,9 @@ def extract_intents(text: str) -> list[str]:
 
     if any(keyword in text for keyword in advice_keywords):
         intents.append("agriculture_advice")
+
+    if any(keyword in text for keyword in farm_context_keywords):
+        intents.append("farm_context")
 
     if not intents:
         intents.append("unknown")

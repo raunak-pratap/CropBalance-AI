@@ -1,11 +1,12 @@
 from typing import Dict
 
+from agent.context.memory import ContextStore
 from agent.planner import plan_request
 from agent.parser import parse_request
 from agent.executor import execute_plan
 from agent.verifier import verify_result
 from agent.response import build_response
-from agent.context.memory import ContextStore
+from agent.context.postgres_memory import PostgresContextStore
 
 
 class CropBalanceAgent:
@@ -16,9 +17,12 @@ class CropBalanceAgent:
         request → parse → plan → execute → result
     """
 
-    def __init__(self):
+    def __init__(self, context_store: ContextStore |None = None):
+        if context_store is not None:
+            self.context_store = context_store
+        else:
+            self.context_store = PostgresContextStore()
         self.pending_request = None
-        self.context_store = ContextStore()
 
     def _complete_pending_request(
         self,
@@ -165,6 +169,7 @@ class CropBalanceAgent:
             image_path=image_path,
             crop=crop,
             state=state,
+            farmer_id=farmer_id,
         )
 
         # 6. Handle execution failures

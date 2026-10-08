@@ -5,6 +5,7 @@ from agent.tools import (
     predict_price,
     get_weather,
     get_agriculture_advice,
+    get_farmer_context,
 )
 
 
@@ -14,6 +15,7 @@ def _execute_tool(
     image_path: str | None = None,
     crop: str | None = None,
     state: str | None = None,
+    farmer_id: str | None = None,
     disease_result: Dict | None = None,
 ) -> Dict:
     """Execute one CropBalance tool."""
@@ -84,12 +86,12 @@ def _execute_tool(
             "result": result,
         }
 
-
     if tool == "get_agriculture_advice":
         # Advice must be grounded in an actual disease result.
         # Never invent disease-specific treatment when image analysis
         # has not completed successfully.
         disease_result = disease_result or {}
+
         disease = disease_result.get("disease")
         confidence = disease_result.get("confidence")
 
@@ -125,6 +127,35 @@ def _execute_tool(
             "result": result,
         }
 
+    if tool == "get_farmer_context":
+        if not farmer_id:
+            return {
+                "status": "missing_input",
+                "missing": ["farmer_id"],
+                "message": "Please provide your farmer ID.",
+                "result": None,
+            }
+
+        result = get_farmer_context(
+            farmer_id=farmer_id,
+        )
+
+        if result.get("status") != "success":
+            return {
+                "status": result.get("status"),
+                "message": result.get(
+                    "message",
+                    f"Farmer context for ID {farmer_id} "
+                    "could not be retrieved.",
+                ),
+                "result": None,
+            }
+
+        return {
+            "status": "success",
+            "result": result,
+        }
+
     return {
         "status": "unsupported",
         "message": f"Unknown tool: {tool}",
@@ -138,6 +169,7 @@ def execute_plan(
     image_path: str | None = None,
     crop: str | None = None,
     state: str | None = None,
+    farmer_id: str | None = None,
 ) -> Dict:
     """
     Execute one or multiple tools selected by the planner.
@@ -174,6 +206,7 @@ def execute_plan(
                 image_path=image_path,
                 crop=crop,
                 state=state,
+                farmer_id=farmer_id,
                 disease_result=disease_result,
             )
 
@@ -182,6 +215,7 @@ def execute_plan(
 
                 if tool == "detect_disease":
                     disease_result = execution["result"]
+
             else:
                 errors[tool] = {
                     "status": execution["status"],

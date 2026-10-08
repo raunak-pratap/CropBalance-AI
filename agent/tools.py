@@ -4,12 +4,13 @@ from services.disease_service import DiseaseService
 from services.price_service import PriceService
 from services.weather_service import WeatherService
 from services.agriculture_advice_service import AgricultureAdviceService
-
+from agent.context.postgres_memory import PostgresContextStore
 
 _disease_service = None
 _price_service = None
 _weather_service = None
 _agriculture_advice_service = None
+_context_store = None
 
 
 def _get_disease_service() -> DiseaseService:
@@ -104,3 +105,34 @@ def get_agriculture_advice(
         disease=disease,
         confidence=confidence,
     )
+
+def _get_context_store() -> PostgresContextStore:
+    global _context_store
+
+    if _context_store is None:
+        _context_store = PostgresContextStore()
+
+    return _context_store
+
+def get_farmer_context(farmer_id: str) -> Dict:
+    """
+    Get the context of a farmer from the context store.
+    """
+    store = _get_context_store()
+
+    context = store.get(farmer_id=farmer_id)
+    if context is None:
+        return {
+        "status": "not_found",
+        "farmer_id": farmer_id,
+    }
+    else:
+        return {
+            "status": "success",
+            "farmer_id": context.farmer_id,
+            "state": context.state,
+            "district": context.district,
+            "current_crop": context.current_crop,
+            "land_size": context.land_size,
+            "soil_type": context.soil_type,
+        }

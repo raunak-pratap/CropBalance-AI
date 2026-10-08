@@ -6,6 +6,7 @@ INTENT_TO_TOOL = {
     "price_prediction": "predict_price",
     "weather": "get_weather",
     "agriculture_advice": "get_agriculture_advice",
+    "farm_context": "get_farmer_context",
 }
 
 
