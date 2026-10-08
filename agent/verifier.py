@@ -120,6 +120,43 @@ def verify_result(tool: str, result: Dict) -> Dict:
             },
         }
 
+    elif tool == "get_farmer_context":
+        context_status = result.get("status")
+        farmer_id = result.get("farmer_id")
+        state = result.get("state")
+        district = result.get("district")
+
+        issues = []
+
+        if context_status != "success":
+            issues.append("Farmer context was not retrieved successfully.")
+
+        if not farmer_id:
+            issues.append("Farmer context contains no farmer ID.")
+
+        if not state:
+            issues.append("Farmer context contains no state information.")
+
+        if not district:
+            issues.append("Farmer context contains no district information.")
+
+        if issues:
+            return {
+                "valid": False,
+                "issues": issues,
+            }
+
+        return {
+            "valid": True,
+            "issues": [],
+            "checks": {
+                "context_present": True,
+                "farmer_id": farmer_id,
+                "state": state,
+                "district": district,
+            },
+        }
+
     return {
         "valid": False,
         "issues": [f"No verifier exists for tool: {tool}"],

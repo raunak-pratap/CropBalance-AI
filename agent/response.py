@@ -17,6 +17,9 @@ def build_response(
     sections = []
     errors = errors or {}
 
+    # ---------------------------------------------------------
+    # PRICE PREDICTION
+    # ---------------------------------------------------------
     if "predict_price" in verified_results:
         data = verified_results["predict_price"]["result"]
 
@@ -41,6 +44,9 @@ def build_response(
             f"{source_note}"
         )
 
+    # ---------------------------------------------------------
+    # WEATHER
+    # ---------------------------------------------------------
     if "get_weather" in verified_results:
         data = verified_results["get_weather"]["result"]
 
@@ -64,6 +70,9 @@ def build_response(
             f"{source_note}"
         )
 
+    # ---------------------------------------------------------
+    # DISEASE DETECTION
+    # ---------------------------------------------------------
     if "detect_disease" in verified_results:
         data = verified_results["detect_disease"]["result"]
 
@@ -80,6 +89,9 @@ def build_response(
             f"({confidence_text})."
         )
 
+    # ---------------------------------------------------------
+    # AGRICULTURE ADVICE
+    # ---------------------------------------------------------
     if "get_agriculture_advice" in verified_results:
         data = verified_results["get_agriculture_advice"]["result"]
 
@@ -94,6 +106,32 @@ def build_response(
             f"⚠️ {data.get('disclaimer', '')}"
         )
 
+    # ---------------------------------------------------------
+    # FARMER CONTEXT
+    # ---------------------------------------------------------
+    if "get_farmer_context" in verified_results:
+        data = verified_results["get_farmer_context"]["result"]
+
+        farmer_id = data.get("farmer_id", "unknown")
+        state = data.get("state", "not provided")
+        district = data.get("district", "not provided")
+        current_crop = data.get("current_crop", "not provided")
+        land_size = data.get("land_size", "not provided")
+        soil_type = data.get("soil_type", "not provided")
+
+        sections.append(
+            "🌾 Your farm details:\n"
+            f"Farmer ID: {farmer_id}\n"
+            f"State: {state}\n"
+            f"District: {district}\n"
+            f"Current crop: {current_crop}\n"
+            f"Land size: {land_size} acres\n"
+            f"Soil type: {soil_type}"
+        )
+
+    # ---------------------------------------------------------
+    # ERRORS
+    # ---------------------------------------------------------
     if errors:
         for tool, error in errors.items():
             message = error.get(
@@ -105,6 +143,9 @@ def build_response(
                 f"⚠️ {tool}: {message}"
             )
 
+    # ---------------------------------------------------------
+    # FALLBACK
+    # ---------------------------------------------------------
     if not sections:
         sections.append(
             "I could not produce a result for this request."
