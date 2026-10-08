@@ -70,12 +70,14 @@ class CropBalanceAgent:
 
         return None
 
+
     def _update_farmer_context(
-        self,
-        farmer_id: str | None,
-        crop: str | None = None,
-        state: str | None = None,
-    ) -> None:
+            self,
+            farmer_id: str | None,
+            crop: str | None = None,
+            state: str | None = None,
+        ) -> None:
+        
         if not farmer_id:
             return
 

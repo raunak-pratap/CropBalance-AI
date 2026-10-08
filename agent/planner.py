@@ -7,6 +7,7 @@ INTENT_TO_TOOL = {
     "weather": "get_weather",
     "agriculture_advice": "get_agriculture_advice",
     "farm_context": "get_farmer_context",
+    "farmer_context_update": "update_farmer_context",
 }
 
 

@@ -114,25 +114,46 @@ def _get_context_store() -> PostgresContextStore:
 
     return _context_store
 
-def get_farmer_context(farmer_id: str) -> Dict:
+def update_farmer_context(
+    farmer_id: str,
+    crop: str | None = None,
+    state: str | None = None,
+    district: str | None = None,
+    land_size: float | None = None,
+    soil_type: str | None = None,
+) -> Dict:
     """
-    Get the context of a farmer from the context store.
+    Update a farmer's stored context.
+
+    Only values that are provided are updated.
+    Existing values are preserved when an argument is None.
     """
+
     store = _get_context_store()
 
     context = store.get(farmer_id=farmer_id)
+
     if context is None:
         return {
-        "status": "not_found",
-        "farmer_id": farmer_id,
-    }
-    else:
-        return {
-            "status": "success",
-            "farmer_id": context.farmer_id,
-            "state": context.state,
-            "district": context.district,
-            "current_crop": context.current_crop,
-            "land_size": context.land_size,
-            "soil_type": context.soil_type,
+            "status": "not_found",
+            "farmer_id": farmer_id,
         }
+
+    updated_context = store.update(
+        farmer_id=farmer_id,
+        current_crop=crop,
+        state=state,
+        district=district,
+        land_size=land_size,
+        soil_type=soil_type,
+    )
+
+    return {
+        "status": "success",
+        "farmer_id": updated_context.farmer_id,
+        "state": updated_context.state,
+        "district": updated_context.district,
+        "current_crop": updated_context.current_crop,
+        "land_size": updated_context.land_size,
+        "soil_type": updated_context.soil_type,
+    }

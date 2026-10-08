@@ -57,6 +57,26 @@ farm_context_keywords = [
     "my district",
     "farm details",
     "farmer details",
+    "i grow",
+]
+
+farmer_context_update_keywords = [
+    "i live in",
+    "i am from",
+    "my soil is",
+    "my crop is",
+    "my farm is",
+    "my land is",
+    "my state is",
+    "i grow",
+    "update my crop",
+    "change my crop",
+    "update my state",
+    "change my state",
+    "update my soil",
+    "change my soil",
+    "update my land",
+    "change my land",
 ]
 
 
@@ -132,6 +152,12 @@ def extract_intent(text: str) -> str:
     if any(keyword in text for keyword in weather_keywords):
         return "weather"
 
+    if any(
+        keyword in text
+        for keyword in farmer_context_update_keywords
+    ):
+        return "farmer_context_update"
+
     if any(keyword in text for keyword in farm_context_keywords):
         return "farm_context"
 
@@ -202,13 +228,17 @@ def extract_intents(text: str) -> list[str]:
     if any(keyword in text for keyword in advice_keywords):
         intents.append("agriculture_advice")
 
+    if any(
+        keyword in text
+        for keyword in farmer_context_update_keywords
+    ):
+        intents.append("farmer_context_update")
+
     if any(keyword in text for keyword in farm_context_keywords):
         intents.append("farm_context")
 
     if not intents:
         intents.append("unknown")
-
-    return intents
 
 
 def parse_request(text: str) -> Dict:

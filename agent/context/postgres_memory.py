@@ -74,7 +74,8 @@ class PostgresContextStore:
                 session.close()
                 raise ValueError(f"Invalid attribute: {key}")
 
-            setattr(farmer, key, value)
+            if value is not None:
+                setattr(farmer, key, value)
 
         session.commit()
         updated_context = FarmerContext(
