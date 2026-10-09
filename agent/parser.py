@@ -49,7 +49,6 @@ farm_context_keywords = [
     "my land",
     "my soil",
     "my soil type",
-    "my crop",
     "my current crop",
     "current crop",
     "my location",
@@ -239,6 +238,8 @@ def extract_intents(text: str) -> list[str]:
 
     if not intents:
         intents.append("unknown")
+    
+    return intents
 
 
 def parse_request(text: str) -> Dict:

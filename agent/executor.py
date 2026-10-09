@@ -6,6 +6,7 @@ from agent.tools import (
     get_weather,
     get_agriculture_advice,
     get_farmer_context,
+    update_farmer_context,
 )
 
 
@@ -147,6 +148,39 @@ def _execute_tool(
                     "message",
                     f"Farmer context for ID {farmer_id} "
                     "could not be retrieved.",
+                ),
+                "result": None,
+            }
+
+        return {
+            "status": "success",
+            "result": result,
+        }
+
+    if tool == "update_farmer_context":
+        if not farmer_id:
+            return {
+                "status": "missing_input",
+                "missing": ["farmer_id"],
+                "message": "Please provide your farmer ID.",
+                "result": None,
+            }
+
+        result = update_farmer_context(
+            farmer_id=farmer_id,
+            crop=crop,
+            state=state,
+            district=parsed.get("district"),
+            land_size=parsed.get("land_size"),
+            soil_type=parsed.get("soil_type"),
+        )
+
+        if result.get("status") != "success":
+            return {
+                "status": result.get("status"),
+                "message": result.get(
+                    "message",
+                    f"Farmer context for ID {farmer_id} could not be updated.",
                 ),
                 "result": None,
             }

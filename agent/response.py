@@ -142,6 +142,36 @@ def build_response(
             sections.append(
                 f"⚠️ {tool}: {message}"
             )
+    
+    # ---------------------------------------------------------
+    # UPDATE FARMER CONTEXT
+    # ---------------------------------------------------------
+    if "update_farmer_context" in verified_results:
+        data = verified_results["update_farmer_context"]["result"]
+
+        farmer_id = data.get("farmer_id", "unknown")
+        current_crop = data.get("current_crop")
+        state = data.get("state")
+        district = data.get("district")
+
+        updated_fields = []
+
+        if current_crop:
+            updated_fields.append(f"Current crop: {current_crop}")
+
+        if state:
+            updated_fields.append(f"State: {state}")
+
+        if district:
+            updated_fields.append(f"District: {district}")
+
+        details = "\n".join(updated_fields)
+
+        sections.append(
+            "✅ Your farmer profile has been updated successfully.\n"
+            f"Farmer ID: {farmer_id}\n"
+            f"{details}"
+        )
 
     # ---------------------------------------------------------
     # FALLBACK
@@ -150,6 +180,7 @@ def build_response(
         sections.append(
             "I could not produce a result for this request."
         )
+
 
     return {
         "status": status,

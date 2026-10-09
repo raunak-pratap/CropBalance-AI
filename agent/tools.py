@@ -114,6 +114,30 @@ def _get_context_store() -> PostgresContextStore:
 
     return _context_store
 
+
+def get_farmer_context(farmer_id: str) -> Dict:
+    """Retrieve a farmer's saved context."""
+    store = _get_context_store()
+    context = store.get(farmer_id=farmer_id)
+
+    if context is None:
+        return {
+            "status": "not_found",
+            "farmer_id": farmer_id,
+            "message": "No saved farmer profile was found.",
+        }
+
+    return {
+        "status": "success",
+        "farmer_id": context.farmer_id,
+        "state": context.state,
+        "district": context.district,
+        "current_crop": context.current_crop,
+        "land_size": context.land_size,
+        "soil_type": context.soil_type,
+    }
+
+
 def update_farmer_context(
     farmer_id: str,
     crop: str | None = None,

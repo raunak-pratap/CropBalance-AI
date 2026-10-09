@@ -120,6 +120,23 @@ def verify_result(tool: str, result: Dict) -> Dict:
             },
         }
 
+    
+    elif tool == "update_farmer_context":
+        issues = []
+
+        if not isinstance(result, dict):
+            issues.append("Update result must be a dictionary.")
+        elif result.get("status") != "success":
+            issues.append("Farmer context update was not successful.")
+        elif not result.get("farmer_id"):
+            issues.append("Missing farmer ID in update result.")
+
+        return {
+            "valid": len(issues) == 0,
+            "issues": issues,
+        }
+
+
     elif tool == "get_farmer_context":
         context_status = result.get("status")
         farmer_id = result.get("farmer_id")
