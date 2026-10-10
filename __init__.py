@@ -1,1 +1,0 @@
-self.class_names = None

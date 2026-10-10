@@ -88,3 +88,17 @@ class PostgresContextStore:
         )
         session.close()
         return updated_context
+
+    def delete(self, farmer_id: str) -> None:
+        """Delete a farmer record by ID."""
+        session = SessionLocal()
+        try:
+            farmer = session.get(Farmer, farmer_id)
+            if farmer is not None:
+                session.delete(farmer)
+                session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()

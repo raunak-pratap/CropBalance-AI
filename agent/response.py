@@ -133,6 +133,11 @@ def build_response(
     # ERRORS
     # ---------------------------------------------------------
     if errors:
+        if status == "partial_success":
+            sections.append(
+                "ℹ️ Some information is available, but "
+                "other parts of your request could not be completed."
+            )
         for tool, error in errors.items():
             message = error.get(
                 "message",

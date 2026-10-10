@@ -1,22 +1,22 @@
-from agent.agent import CropBalanceAgent
+
 from agent.context.memory import ContextStore
 from agent.context.models import FarmerContext
 
-store = ContextStore()
 
-store.save(
-    FarmerContext(
+def test_farmer_context_can_be_saved_and_retrieved():
+    store = ContextStore()
+
+    farmer = FarmerContext(
         farmer_id="test_farmer",
         state="Maharashtra",
         current_crop="Wheat",
     )
-)
 
-agent = CropBalanceAgent(context_store=store)
+    store.save(farmer)
 
-result = agent.run(
-    request="What is the price of my crop?",
-    farmer_id="test_farmer",
-)
+    result = store.get("test_farmer")
 
-print(result["parsed"])
+    assert result is not None
+    assert result.farmer_id == "test_farmer"
+    assert result.state == "Maharashtra"
+    assert result.current_crop == "Wheat"

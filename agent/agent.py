@@ -288,6 +288,12 @@ class CropBalanceAgent:
 
         # 9. Handle partial execution
         if execution["status"] == "partial_success":
+            response = build_response(
+                verified_results=verified_results,
+                status="partial_success",
+                errors=execution.get("errors", {}),
+            )
+
             return {
                 "status": "partial_success",
                 "plan": plan,
@@ -295,6 +301,7 @@ class CropBalanceAgent:
                 "result": verified_results,
                 "errors": execution.get("errors", {}),
                 "verification_errors": verification_errors,
+                "response": response,
             }
 
         # 10. Handle verification failure

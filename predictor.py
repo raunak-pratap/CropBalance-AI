@@ -6,7 +6,7 @@ Used by the FastAPI server to serve predictions.
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Dict
 
 import pandas as pd
@@ -138,7 +138,7 @@ class CropPredictor:
         return {
             "crop": self.crop,
             "forecast": forecast,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     def _load_checkpoint(self):
