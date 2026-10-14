@@ -613,6 +613,9 @@ class MandiPriceFetcher:
         if df.empty:
             return pd.DataFrame()
 
+        # Remove exact duplicate source records before aggregation.
+        df = df.drop_duplicates().copy()
+
         def weighted_average(group, value_col):
             weights = group["arrivals_tonnes"]
 

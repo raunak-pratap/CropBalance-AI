@@ -17,6 +17,7 @@ __pycache__/
 # ── Virtual Environments ───────────────────────
 venv/
 .venv/
+.venv-sklearn-test/
 env/
 ENV/
 .venv.bak/
@@ -101,3 +102,4 @@ coverage.xml
 *.tmp
 *.temp
 .cache/
+node_modules/
