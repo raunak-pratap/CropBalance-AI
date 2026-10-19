@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+    
 
 # ──────────────────────────────────────────────
 # Supported crops (generic system)
@@ -114,6 +115,17 @@ class APIConfig:
     # eNAM (National Agriculture Market)
     enam_base_url: str = "https://enam.gov.in/web/dashboard/trade-data"
     enam_api_key: str = field(default_factory=lambda: os.getenv("ENAM_API_KEY", ""))
+
+
+    # data.gov.in — primary historical mandi-price source
+    data_gov_in_base_url: str = (
+        "https://api.data.gov.in/resource/"
+        "35985678-0d79-46b4-9ed6-6f13308a1d24"
+    )
+    data_gov_in_api_key: str = field(
+        default_factory=lambda: os.getenv("DATA_GOV_IN_API_KEY", "")
+    )
+
 
     # Internal FastAPI server
     host: str = "0.0.0.0"
