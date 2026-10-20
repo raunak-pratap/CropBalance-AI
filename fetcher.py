@@ -153,8 +153,8 @@ class MandiPriceFetcher:
         logger.info(
             f"AGMARKNET cache saved: {cache_path}"
         )
-
-
+    
+    
     def _load_agmarknet_cache(
         self,
         crop: str,
@@ -162,13 +162,10 @@ class MandiPriceFetcher:
         year: int,
         month: int,
     ):
-        """Load cached AGMARKNET market-level data."""
+        """Load and validate cached AGMARKNET market-level data."""
 
         cache_path = self._get_cache_path(
-            crop,
-            state,
-            year,
-            month,
+            crop, state, year, month
         )
 
         if not cache_path.exists():
@@ -180,8 +177,66 @@ class MandiPriceFetcher:
                 parse_dates=["date"],
             )
 
+            required_cols = [
+                "date", "state", "market", "variety",
+                "arrivals_tonnes", "min_price",
+                "max_price", "modal_price",
+            ]
+
+            missing_cols = [
+                col for col in required_cols
+                if col not in df.columns
+            ]
+
+            if missing_cols:
+                logger.warning(
+                    f"Invalid AGMARKNET cache {cache_path}: "
+                    f"missing columns {missing_cols}"
+                )
+                return None
+
+            for col in [
+                "arrivals_tonnes",
+                "min_price",
+                "max_price",
+                "modal_price",
+            ]:
+                df[col] = pd.to_numeric(
+                    df[col], errors="coerce"
+                )
+
+            valid = (
+                df["date"].notna()
+                & df[
+                    ["min_price", "max_price", "modal_price"]
+                ].notna().all(axis=1)
+                & (df["min_price"] > 0)
+                & (df["max_price"] > 0)
+                & (df["modal_price"] > 0)
+                & (df["min_price"] <= df["modal_price"])
+                & (df["modal_price"] <= df["max_price"])
+            )
+
+            invalid_count = int((~valid).sum())
+
+            if invalid_count:
+                logger.warning(
+                    f"Filtered {invalid_count} invalid rows from "
+                    f"AGMARKNET cache {cache_path}; "
+                    "original file unchanged."
+                )
+
+            df = df.loc[valid].copy()
+
+            if df.empty:
+                logger.warning(
+                    f"No valid rows in AGMARKNET cache: {cache_path}"
+                )
+                return None
+
             logger.info(
-                f"AGMARKNET cache hit: {cache_path}"
+                f"AGMARKNET cache hit: {cache_path} "
+                f"({len(df)} valid rows)"
             )
 
             return df
@@ -191,10 +246,9 @@ class MandiPriceFetcher:
                 f"Could not load AGMARKNET cache "
                 f"{cache_path}: {e}"
             )
-
             return None
 
-    
+        
     def fetch(
         self,
         crop: str,
@@ -266,6 +320,7 @@ class MandiPriceFetcher:
             "offset": 0,
             "filters[State]": state,
             "filters[Commodity]": crop.title(),
+            "sort[Arrival_Date]": "desc",
         }
 
         rows = []
@@ -279,11 +334,40 @@ class MandiPriceFetcher:
                 timeout=30,
             )
             response.raise_for_status()
+            
             payload = response.json()
+
+            # Detect API-level errors, including errors returned with HTTP 200.
+            if "records" not in payload and payload.get("message"):
+                raise RuntimeError(
+                    f"data.gov.in API error: {payload.get('message')}"
+                )
+
             records = payload.get("records", [])
+
+            logger.info(
+                f"data.gov.in page: offset={params['offset']}, "
+                f"records={len(records)}, "
+                f"first_date={records[0].get('Arrival_Date') if records else None}, "
+                f"last_date={records[-1].get('Arrival_Date') if records else None}"
+            )
 
             if not records:
                 break
+
+
+            # Process this page before stopping pagination if it reaches
+            # dates earlier than the requested range.
+            page_dates = pd.to_datetime(
+                [record.get("Arrival_Date") for record in records],
+                dayfirst=True,
+                errors="coerce",
+            )
+            valid_dates = page_dates[~page_dates.isna()]
+            stop_after_this_page = (
+                not valid_dates.empty
+                and valid_dates.min() < pd.to_datetime(start_date)
+            )
 
             for record in records:
                 try:
@@ -338,6 +422,9 @@ class MandiPriceFetcher:
                     })
                 except (TypeError, ValueError):
                     continue
+
+            if stop_after_this_page:
+                break
 
             total = payload.get("total")
             params["offset"] += len(records)
@@ -685,67 +772,117 @@ class MandiPriceFetcher:
         logger.info(f"Generated {len(df)} synthetic rows for {crop} in {state}")
         return df
 
+    
     def _parse_agmarknet_response(
         self,
         raw: dict,
         state: str,
     ) -> pd.DataFrame:
-        """Normalize AGMARKNET date-wise commodity response."""
+        """Normalize and validate AGMARKNET market-level observations."""
 
         records = []
 
         for market in raw.get("markets", []):
-            market_name = market.get("marketName", "Unknown")
+            market_name = market.get("marketName") or "Unknown"
 
             for day in market.get("dates", []):
-                arrival_date = day.get("arrivalDate")
+                arrival_date = pd.to_datetime(
+                    day.get("arrivalDate"),
+                    format="%d/%m/%Y",
+                    errors="coerce",
+                )
+
+                if pd.isna(arrival_date):
+                    continue
 
                 for row in day.get("data", []):
+                    minimum = pd.to_numeric(
+                        row.get("minimumPrice"), errors="coerce"
+                    )
+                    maximum = pd.to_numeric(
+                        row.get("maximumPrice"), errors="coerce"
+                    )
+                    modal = pd.to_numeric(
+                        row.get("modalPrice"), errors="coerce"
+                    )
+                    arrivals = pd.to_numeric(
+                        row.get("arrivals"), errors="coerce"
+                    )
+
+                    # Reject missing, non-positive, or inconsistent prices.
+                    if pd.isna(minimum) or pd.isna(maximum) or pd.isna(modal):
+                        continue
+
+                    if minimum <= 0 or modal <= 0 or maximum <= 0:
+                        continue
+
+                    if not minimum <= modal <= maximum:
+                        continue
+
                     records.append({
-                        "date": pd.to_datetime(
-                            arrival_date,
-                            format="%d/%m/%Y",
-                        ),
+                        "date": arrival_date.normalize(),
                         "state": state,
                         "market": market_name,
                         "variety": row.get("variety"),
-                        "arrivals_tonnes": float(
-                            row.get("arrivals", 0) or 0
+                        "arrivals_tonnes": (
+                            float(arrivals)
+                            if pd.notna(arrivals) and arrivals >= 0
+                            else np.nan
                         ),
-                        "min_price": float(
-                            row.get("minimumPrice", 0) or 0
-                        ),
-                        "max_price": float(
-                            row.get("maximumPrice", 0) or 0
-                        ),
-                        "modal_price": float(
-                            row.get("modalPrice", 0) or 0
-                        ),
+                        "min_price": float(minimum),
+                        "max_price": float(maximum),
+                        "modal_price": float(modal),
                     })
 
-        if not records:
+        columns = [
+            "date", "state", "market", "variety",
+            "arrivals_tonnes", "min_price", "max_price",
+            "modal_price",
+        ]
+
+        return pd.DataFrame(records, columns=columns)
+
+
+    
+    def _aggregate_agmarknet_daily(self, df):
+        if df.empty:
             return pd.DataFrame()
 
-        return pd.DataFrame(records)
+        df = df.copy()
 
-    def _aggregate_agmarknet_daily(
-        self,
-        df: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """Aggregate market-level AGMARKNET data into daily state-level data."""
+        # Convert price columns to numeric values safely.
+        price_cols = ["min_price", "modal_price", "max_price"]
+        for col in price_cols:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        # Exclude rows with missing, non-positive, or inconsistent prices.
+        valid_prices = (
+            df[price_cols].notna().all(axis=1)
+            & (df[price_cols] > 0).all(axis=1)
+            & (df["min_price"] <= df["modal_price"])
+            & (df["modal_price"] <= df["max_price"])
+        )
+        df = df.loc[valid_prices].copy()
 
         if df.empty:
             return pd.DataFrame()
 
-        # Remove exact duplicate source records before aggregation.
-        df = df.drop_duplicates().copy()
+        # Remove exact duplicate source records only.
+        df = df.drop_duplicates()
+
+        # Treat missing or invalid arrivals as zero weight.
+        df["arrivals_tonnes"] = pd.to_numeric(
+            df["arrivals_tonnes"], errors="coerce"
+        )
+        df.loc[
+            df["arrivals_tonnes"].isna() | (df["arrivals_tonnes"] < 0),
+            "arrivals_tonnes",
+        ] = 0.0
 
         def weighted_average(group, value_col):
             weights = group["arrivals_tonnes"]
-
             if weights.sum() <= 0:
                 return group[value_col].mean()
-
             return (group[value_col] * weights).sum() / weights.sum()
 
         daily = (
@@ -753,17 +890,9 @@ class MandiPriceFetcher:
             .apply(
                 lambda group: pd.Series({
                     "arrivals_tonnes": group["arrivals_tonnes"].sum(),
-
-                    # Preserve actual observed price boundaries.
                     "min_price": group["min_price"].min(),
                     "max_price": group["max_price"].max(),
-
-                    # Arrival-weighted market modal price.
-                    "modal_price": weighted_average(
-                        group,
-                        "modal_price",
-                    ),
-
+                    "modal_price": weighted_average(group, "modal_price"),
                     "market_count": group["market"].nunique(),
                 }),
                 include_groups=False,
@@ -771,9 +900,8 @@ class MandiPriceFetcher:
             .reset_index()
         )
 
-        daily = daily.sort_values("date").reset_index(drop=True)
+        return daily.sort_values("date").reset_index(drop=True)
 
-        return daily
 
 
 # ──────────────────────────────────────────────

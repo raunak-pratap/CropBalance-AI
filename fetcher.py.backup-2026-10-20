@@ -27,14 +27,18 @@ from config import SUPPORTED_CROPS, API_CONFIG, PATH_CONFIG
 # ──────────────────────────────────────────────
 
 class MandiPriceFetcher:
+    
     """
-    Fetches daily mandi (wholesale market) price data.
+    Fetches daily mandi prices from government sources.
 
-    Priority order:
-      1. eNAM API  (if key available)
-      2. Agmarknet (if key available)
-      3. Synthetic data generator (fallback for dev/testing)
+    Priority:
+      1. data.gov.in — historical prices
+      2. eNAM — fallback
+      3. AGMARKNET — fallback
+      4. Synthetic data — development fallback only
     """
+    
+    
 
     def __init__(self):
         self.session = requests.Session()
@@ -190,6 +194,7 @@ class MandiPriceFetcher:
 
             return None
 
+    
     def fetch(
         self,
         crop: str,
@@ -197,61 +202,214 @@ class MandiPriceFetcher:
         start_date: str,
         end_date: str,
     ) -> pd.DataFrame:
-        """
-        Returns a DataFrame with columns:
-            date, crop, state, market, min_price, max_price,
-            modal_price, arrivals_tonnes
-        """
+        """Fetch prices in the configured source-priority order."""
         crop = crop.lower()
         if crop not in SUPPORTED_CROPS:
-            raise ValueError(f"Unsupported crop: {crop}. Choose from {SUPPORTED_CROPS}")
-
-        if API_CONFIG.enam_api_key:
-            logger.info(f"Fetching {crop} prices from eNAM API")
-            return self._fetch_enam(
-                crop,
-                state,
-                start_date,
-                end_date,
+            raise ValueError(
+                f"Unsupported crop: {crop}. Choose from {SUPPORTED_CROPS}"
             )
 
-        # AGMARKNET historical endpoint does not use the old
-        # AGMARKNET_API_KEY configuration gate.
-        try:
+        sources = [
+            ("data.gov.in", self._fetch_data_gov_in),
+            ("eNAM", self._fetch_enam),
+            ("AGMARKNET", self._fetch_agmarknet),
+        ]
+
+        for source_name, fetch_method in sources:
+            try:
+                logger.info(f"Trying {source_name} for {crop} / {state}")
+                df = fetch_method(crop, state, start_date, end_date)
+
+                if df is not None and not df.empty:
+                    if source_name == "eNAM":
+                        df.attrs["data_source"] = "enam"
+                        df.attrs["is_live"] = True
+                    elif source_name == "AGMARKNET":
+                        df.attrs["data_source"] = "agmarknet"
+
+                    logger.info(
+                        f"{source_name} returned {len(df)} rows"
+                    )
+                    return df
+
+                logger.warning(f"{source_name} returned no usable rows")
+
+            except Exception as exc:
+                logger.warning(f"{source_name} failed: {exc}")
+
+        logger.warning(
+            "All government sources failed; using synthetic data "
+            "for development only."
+        )
+        df = self._generate_synthetic(
+            crop, state, start_date, end_date
+        )
+        df.attrs["data_source"] = "synthetic_fallback"
+        df.attrs["is_live"] = False
+        df.attrs["is_historical"] = False
+        df.attrs["is_complete"] = False
+        return df
+
+
+    
+    def _fetch_data_gov_in(
+        self, crop: str, state: str, start_date: str, end_date: str
+    ) -> pd.DataFrame:
+        """Fetch historical mandi prices from data.gov.in."""
+        if not API_CONFIG.data_gov_in_api_key:
+            raise RuntimeError("DATA_GOV_IN_API_KEY is not configured")
+
+        params = {
+            "api-key": API_CONFIG.data_gov_in_api_key,
+            "format": "json",
+            "limit": 1000,
+            "offset": 0,
+            "filters[State]": state,
+            "filters[Commodity]": crop.title(),
+            "sort[Arrival_Date]": "desc",
+        }
+
+        rows = []
+        seen = set()
+        max_pages = 100
+
+        for _ in range(max_pages):
+            response = self.session.get(
+                API_CONFIG.data_gov_in_base_url,
+                params=params,
+                timeout=30,
+            )
+            response.raise_for_status()
+            
+            payload = response.json()
+
+            # Detect API-level errors, including errors returned with HTTP 200.
+            if "records" not in payload and payload.get("message"):
+                raise RuntimeError(
+                    f"data.gov.in API error: {payload.get('message')}"
+                )
+
+            records = payload.get("records", [])
+
             logger.info(
-                f"Fetching {crop} prices from AGMARKNET historical endpoint"
+                f"data.gov.in page: offset={params['offset']}, "
+                f"records={len(records)}, "
+                f"first_date={records[0].get('Arrival_Date') if records else None}, "
+                f"last_date={records[-1].get('Arrival_Date') if records else None}"
             )
 
-            return self._fetch_agmarknet(
-                crop,
-                state,
-                start_date,
-                end_date,
+            if not records:
+                break
+
+
+            # Process this page before stopping pagination if it reaches
+            # dates earlier than the requested range.
+            page_dates = pd.to_datetime(
+                [record.get("Arrival_Date") for record in records],
+                dayfirst=True,
+                errors="coerce",
+            )
+            valid_dates = page_dates[~page_dates.isna()]
+            stop_after_this_page = (
+                not valid_dates.empty
+                and valid_dates.min() < pd.to_datetime(start_date)
             )
 
-        except Exception as e:
-            logger.error(
-                f"AGMARKNET fetch failed: {e}"
+            for record in records:
+                try:
+                    record_date = pd.to_datetime(
+                        record.get("Arrival_Date"),
+                        dayfirst=True,
+                        errors="coerce",
+                    )
+                    if pd.isna(record_date):
+                        continue
+
+                    if not (
+                        pd.to_datetime(start_date)
+                        <= record_date
+                        <= pd.to_datetime(end_date)
+                    ):
+                        continue
+
+                    modal = pd.to_numeric(
+                        record.get("Modal_Price"), errors="coerce"
+                    )
+                    minimum = pd.to_numeric(
+                        record.get("Min_Price"), errors="coerce"
+                    )
+                    maximum = pd.to_numeric(
+                        record.get("Max_Price"), errors="coerce"
+                    )
+
+                    if pd.isna(modal) or pd.isna(minimum) or pd.isna(maximum):
+                        continue
+                    if minimum <= 0 or modal <= 0 or maximum <= 0:
+                        continue
+                    if minimum > modal or modal > maximum:
+                        continue
+
+                    market = record.get("Market", "")
+                    key = (record_date.normalize(), str(market), float(modal))
+                    if key in seen:
+                        continue
+                    seen.add(key)
+
+                    rows.append({
+                        "date": record_date.normalize(),
+                        "crop": crop,
+                        "state": record.get("State", state),
+                        "market": market,
+                        "min_price": float(minimum),
+                        "max_price": float(maximum),
+                        "modal_price": float(modal),
+                        # This API resource does not provide arrivals.
+                        "arrivals_tonnes": np.nan,
+                    })
+                except (TypeError, ValueError):
+                    continue
+
+            if stop_after_this_page:
+                break
+
+            total = payload.get("total")
+            params["offset"] += len(records)
+
+            if len(records) < params["limit"]:
+                break
+            if total is not None and params["offset"] >= int(total):
+                break
+        else:
+            raise RuntimeError(
+                "data.gov.in pagination limit reached; coverage may be incomplete"
             )
 
-            empty_df = pd.DataFrame(
-                columns=[
-                    "date",
-                    "state",
-                    "arrivals_tonnes",
-                    "min_price",
-                    "max_price",
-                    "modal_price",
-                    "market_count",
-                ]
+        if not rows:
+            raise RuntimeError(
+                "data.gov.in returned no usable records for the requested range"
             )
 
-            empty_df.attrs["data_source"] = "agmarknet_failed"
-            empty_df.attrs["is_live"] = False
-            empty_df.attrs["is_complete"] = False
-            empty_df.attrs["error"] = str(e)
+        market_df = pd.DataFrame(rows)
+        daily_df = (
+            market_df.groupby(["date", "state"], as_index=False)
+            .agg(
+                min_price=("min_price", "min"),
+                max_price=("max_price", "max"),
+                modal_price=("modal_price", "mean"),
+                market_count=("market", "nunique"),
+                arrivals_tonnes=("arrivals_tonnes", "first"),
+            )
+            .sort_values("date")
+            .reset_index(drop=True)
+        )
 
-            return empty_df
+        daily_df.attrs["data_source"] = "data.gov.in"
+        daily_df.attrs["is_live"] = False
+        daily_df.attrs["is_historical"] = True
+        daily_df.attrs["arrivals_available"] = False
+        daily_df.attrs["is_complete"] = False  # Coverage not yet established.
+        return daily_df
+
 
     # ── eNAM API ──────────────────────────────
     def _fetch_enam(self, crop, state, start_date, end_date) -> pd.DataFrame:
@@ -270,12 +428,11 @@ class MandiPriceFetcher:
             df.attrs["data_source"] = "enam"
             df.attrs["is_live"] = True
             return df
+        
         except Exception as e:
-            logger.error(f"eNAM fetch failed: {e} — falling back to synthetic data")
-            df = self._generate_synthetic(crop, state, start_date, end_date)
-            df.attrs["data_source"] = "synthetic_fallback"
-            df.attrs["is_live"] = False
-            return df
+            logger.error(f"eNAM fetch failed: {e}")
+            raise
+
 
     def _parse_enam_response(self, raw: dict, crop: str, state: str) -> pd.DataFrame:
         records = raw.get("data", [])
