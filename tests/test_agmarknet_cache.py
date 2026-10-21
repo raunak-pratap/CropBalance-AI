@@ -312,3 +312,124 @@ def test_aggregate_agmarknet_daily_combines_markets_and_removes_exact_duplicates
     assert daily["max_price"] == 2500.0
     assert daily["modal_price"] == 2350.0
     assert daily["market_count"] == 2
+
+
+def test_aggregate_agmarknet_daily_excludes_invalid_prices():
+    fetcher = object.__new__(MandiPriceFetcher)
+
+    rows = pd.DataFrame([
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Valid Market",
+            "arrivals_tonnes": 10.0,
+            "min_price": 2000.0,
+            "max_price": 2400.0,
+            "modal_price": 2200.0,
+        },
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Missing Price Market",
+            "arrivals_tonnes": 100.0,
+            "min_price": None,
+            "max_price": 2500.0,
+            "modal_price": 2300.0,
+        },
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Zero Price Market",
+            "arrivals_tonnes": 100.0,
+            "min_price": 0.0,
+            "max_price": 2500.0,
+            "modal_price": 2300.0,
+        },
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Negative Price Market",
+            "arrivals_tonnes": 100.0,
+            "min_price": -100.0,
+            "max_price": 2500.0,
+            "modal_price": 2300.0,
+        },
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Inconsistent Price Market",
+            "arrivals_tonnes": 100.0,
+            "min_price": 2500.0,
+            "max_price": 2400.0,
+            "modal_price": 2450.0,
+        },
+    ])
+
+    result = fetcher._aggregate_agmarknet_daily(rows)
+
+    assert len(result) == 1
+    daily = result.iloc[0]
+
+    # Invalid-price rows must not affect any daily aggregate.
+    assert daily["arrivals_tonnes"] == 10.0
+    assert daily["min_price"] == 2000.0
+    assert daily["max_price"] == 2400.0
+    assert daily["modal_price"] == 2200.0
+    assert daily["market_count"] == 1
+
+
+def test_aggregate_agmarknet_daily_treats_invalid_arrivals_as_zero_weight():
+    fetcher = object.__new__(MandiPriceFetcher)
+
+    rows = pd.DataFrame([
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Valid Arrivals",
+            "arrivals_tonnes": 10.0,
+            "min_price": 2000.0,
+            "max_price": 2400.0,
+            "modal_price": 2200.0,
+        },
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Missing Arrivals",
+            "arrivals_tonnes": None,
+            "min_price": 1800.0,
+            "max_price": 2500.0,
+            "modal_price": 2400.0,
+        },
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Non-numeric Arrivals",
+            "arrivals_tonnes": "unknown",
+            "min_price": 1900.0,
+            "max_price": 2600.0,
+            "modal_price": 2500.0,
+        },
+        {
+            "date": pd.Timestamp("2026-01-15"),
+            "state": "Punjab",
+            "market": "Negative Arrivals",
+            "arrivals_tonnes": -50.0,
+            "min_price": 1700.0,
+            "max_price": 2700.0,
+            "modal_price": 2600.0,
+        },
+    ])
+
+    result = fetcher._aggregate_agmarknet_daily(rows)
+
+    assert len(result) == 1
+    daily = result.iloc[0]
+
+    # Invalid arrivals become zero; they must not distort the weighted price.
+    assert daily["arrivals_tonnes"] == 10.0
+    assert daily["modal_price"] == 2200.0
+
+    # Rows with valid prices still contribute to price ranges and market count.
+    assert daily["min_price"] == 1700.0
+    assert daily["max_price"] == 2700.0
+    assert daily["market_count"] == 4
