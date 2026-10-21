@@ -144,3 +144,57 @@ def test_fetch_downloads_when_cache_has_no_valid_rows(tmp_path, monkeypatch):
     assert not result.empty
     assert result.iloc[0]["modal_price"] == 2200
     assert "2026-01" in result.attrs["successful_months"]
+
+
+def test_partial_month_failure_marks_result_incomplete(monkeypatch):
+    fetcher = object.__new__(MandiPriceFetcher)
+
+    class FakeResolver:
+        def get_state_id(self, state):
+            return 1
+
+        def get_commodity_id(self, crop):
+            return 2
+
+    class FakeResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {
+                "success": True,
+                "markets": [{
+                    "marketName": "Test Market",
+                    "dates": [{
+                        "arrivalDate": "15/01/2026",
+                        "data": [{
+                            "variety": "Common",
+                            "arrivals": 10,
+                            "minimumPrice": 2000,
+                            "maximumPrice": 2400,
+                            "modalPrice": 2200,
+                        }],
+                    }],
+                }],
+            }
+
+    def fake_get(url, params, max_retries=3):
+        if params["month"] == 2:
+            raise RuntimeError("Simulated API failure")
+        return FakeResponse()
+
+    fetcher.metadata_resolver = FakeResolver()
+    fetcher._get_with_retry = fake_get
+    fetcher._load_agmarknet_cache = (
+        lambda crop, state, year, month: None
+    )
+    fetcher._save_agmarknet_cache = lambda *args, **kwargs: None
+
+    result = fetcher._fetch_agmarknet(
+        "wheat", "Punjab", "2026-01-01", "2026-02-28"
+    )
+
+    assert not result.empty
+    assert result.attrs["is_complete"] is False
+    assert "2026-01" in result.attrs["successful_months"]
+    assert "2026-02" in result.attrs["failed_months"]
