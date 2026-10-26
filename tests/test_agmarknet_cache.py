@@ -433,3 +433,129 @@ def test_aggregate_agmarknet_daily_treats_invalid_arrivals_as_zero_weight():
     assert daily["min_price"] == 1700.0
     assert daily["max_price"] == 2700.0
     assert daily["market_count"] == 4
+
+def test_parse_agmarknet_response_skips_invalid_dates():
+    fetcher = object.__new__(MandiPriceFetcher)
+
+    raw = {
+        "markets": [{
+            "marketName": "Test Market",
+            "dates": [
+                {
+                    "arrivalDate": "not-a-date",
+                    "data": [{
+                        "variety": "Common",
+                        "arrivals": 10,
+                        "minimumPrice": 2000,
+                        "maximumPrice": 2400,
+                        "modalPrice": 2200,
+                    }],
+                },
+                {
+                    "arrivalDate": "15/01/2026",
+                    "data": [{
+                        "variety": "Common",
+                        "arrivals": 10,
+                        "minimumPrice": 2000,
+                        "maximumPrice": 2400,
+                        "modalPrice": 2200,
+                    }],
+                },
+            ],
+        }],
+    }
+
+    result = fetcher._parse_agmarknet_response(raw, "Punjab")
+
+    assert len(result) == 1
+    assert result.iloc[0]["date"] == pd.Timestamp("2026-01-15")
+
+
+def test_parse_agmarknet_response_skips_invalid_prices():
+    fetcher = object.__new__(MandiPriceFetcher)
+
+    valid_row = {
+        "variety": "Common",
+        "arrivals": 10,
+        "minimumPrice": 2000,
+        "maximumPrice": 2400,
+        "modalPrice": 2200,
+    }
+
+    invalid_rows = [
+        {**valid_row, "minimumPrice": None},
+        {**valid_row, "maximumPrice": "unknown"},
+        {**valid_row, "modalPrice": None},
+        {**valid_row, "minimumPrice": 0},
+        {**valid_row, "modalPrice": -1},
+        {**valid_row, "minimumPrice": 2500, "maximumPrice": 2400,
+         "modalPrice": 2450},
+    ]
+
+    raw = {
+        "markets": [{
+            "marketName": "Test Market",
+            "dates": [{
+                "arrivalDate": "15/01/2026",
+                "data": [*invalid_rows, valid_row],
+            }],
+        }],
+    }
+
+    result = fetcher._parse_agmarknet_response(raw, "Punjab")
+
+    assert len(result) == 1
+    assert result.iloc[0]["min_price"] == 2000.0
+    assert result.iloc[0]["max_price"] == 2400.0
+    assert result.iloc[0]["modal_price"] == 2200.0
+
+def test_parse_agmarknet_response_normalizes_invalid_arrivals():
+    fetcher = object.__new__(MandiPriceFetcher)
+
+    rows = [
+        {
+            "variety": "Valid",
+            "arrivals": 10,
+            "minimumPrice": 2000,
+            "maximumPrice": 2400,
+            "modalPrice": 2200,
+        },
+        {
+            "variety": "Missing",
+            "arrivals": None,
+            "minimumPrice": 2000,
+            "maximumPrice": 2400,
+            "modalPrice": 2200,
+        },
+        {
+            "variety": "Non-numeric",
+            "arrivals": "unknown",
+            "minimumPrice": 2000,
+            "maximumPrice": 2400,
+            "modalPrice": 2200,
+        },
+        {
+            "variety": "Negative",
+            "arrivals": -5,
+            "minimumPrice": 2000,
+            "maximumPrice": 2400,
+            "modalPrice": 2200,
+        },
+    ]
+
+    raw = {
+        "markets": [{
+            "marketName": "Test Market",
+            "dates": [{
+                "arrivalDate": "15/01/2026",
+                "data": rows,
+            }],
+        }],
+    }
+
+    result = fetcher._parse_agmarknet_response(raw, "Punjab")
+
+    assert len(result) == 4
+    assert result.iloc[0]["arrivals_tonnes"] == 10.0
+    assert result.iloc[1:]["arrivals_tonnes"].isna().all()
+    assert (result["modal_price"] == 2200.0).all()
