@@ -337,6 +337,12 @@ class MandiPriceFetcher:
             
             payload = response.json()
 
+            # Validate the top-level API response before accessing its fields.
+            if not isinstance(payload, dict):
+                raise RuntimeError(
+                    "Invalid data.gov.in response: expected a JSON object"
+                )
+
             # Detect API-level errors, including errors returned with HTTP 200.
             if "records" not in payload and payload.get("message"):
                 raise RuntimeError(
@@ -344,6 +350,16 @@ class MandiPriceFetcher:
                 )
 
             records = payload.get("records", [])
+
+            if not isinstance(records, list):
+                raise RuntimeError(
+                    "Invalid data.gov.in response: 'records' must be a list"
+                )
+
+            if any(not isinstance(record, dict) for record in records):
+                raise RuntimeError(
+                    "Invalid data.gov.in response: each record must be an object"
+                )
 
             logger.info(
                 f"data.gov.in page: offset={params['offset']}, "
