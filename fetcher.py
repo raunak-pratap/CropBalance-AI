@@ -320,7 +320,6 @@ class MandiPriceFetcher:
             "offset": 0,
             "filters[State]": state,
             "filters[Commodity]": crop.title(),
-            "sort[Arrival_Date]": "desc",
         }
 
         rows = []
