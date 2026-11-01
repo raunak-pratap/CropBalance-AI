@@ -103,26 +103,41 @@ class AgmarknetMetadataResolver:
         """Resolve district name to AGMARKNET district ID."""
 
         metadata = self.load()
-
         records = metadata.get("district_data", [])
 
         if state:
             state_id = self.get_state_id(state)
-
             records = [
-                item
-                for item in records
-                if item.get("state_id") == state_id
-                or item.get("stateId") == state_id
+                item for item in records
+                if str(item.get("state_id", item.get("stateId"))) == str(state_id)
             ]
 
-        return self._resolve_id(
-            records,
-            district,
-            name_keys=("district_name", "districtName"),
-            id_keys=("district_id", "districtId"),
-            entity="district",
-        )
+        try:
+            return self._resolve_id(
+                records,
+                district,
+                name_keys=("district_name", "districtName"),
+                id_keys=("id", "district_id", "districtId"),
+                entity="district",
+            )
+        except ValueError:
+            # Osmanabad is the legacy district name for Dharashiv.
+            aliases = {
+                "dharashiv": "osmanabad",
+                "osmanabad": "dharashiv",
+            }
+            alias = aliases.get(self._normalize(district))
+
+            if not alias:
+                raise
+
+            return self._resolve_id(
+                records,
+                alias,
+                name_keys=("district_name", "districtName"),
+                id_keys=("id", "district_id", "districtId"),
+                entity="district",
+            )
 
     def get_market_id(
         self,
@@ -132,24 +147,20 @@ class AgmarknetMetadataResolver:
         """Resolve market name to AGMARKNET market ID."""
 
         metadata = self.load()
-
         records = metadata.get("market_data", [])
 
         if state:
             state_id = self.get_state_id(state)
-
             records = [
-                item
-                for item in records
-                if item.get("state_id") == state_id
-                or item.get("stateId") == state_id
+                item for item in records
+                if str(item.get("state_id", item.get("stateId"))) == str(state_id)
             ]
 
         return self._resolve_id(
             records,
             market,
-            name_keys=("market_name", "marketName"),
-            id_keys=("market_id", "marketId"),
+            name_keys=("mkt_name", "market_name", "marketName"),
+            id_keys=("id", "market_id", "marketId"),
             entity="market",
         )
 
@@ -161,27 +172,38 @@ class AgmarknetMetadataResolver:
         """Resolve variety name to AGMARKNET variety ID."""
 
         metadata = self.load()
-
         records = metadata.get("variety_data", [])
 
         if commodity:
             commodity_id = self.get_commodity_id(commodity)
 
-            records = [
-                item
-                for item in records
-                if (
-                    item.get("cmdt_id") == commodity_id
-                    or item.get("commodity_id") == commodity_id
-                    or item.get("commodityId") == commodity_id
+            def matches_commodity(item):
+                raw_ids = item.get(
+                    "cmdt_id",
+                    item.get("commodity_id", item.get("commodityId")),
                 )
+
+                if raw_ids is None:
+                    return False
+
+                if not isinstance(raw_ids, list):
+                    raw_ids = [raw_ids]
+
+                return any(
+                    str(item_id) == str(commodity_id)
+                    for item_id in raw_ids
+                )
+
+            records = [
+                item for item in records
+                if matches_commodity(item)
             ]
 
         return self._resolve_id(
             records,
             variety,
             name_keys=("variety_name", "varietyName"),
-            id_keys=("variety_id", "varietyId"),
+            id_keys=("id", "variety_id", "varietyId"),
             entity="variety",
         )
 
@@ -190,7 +212,7 @@ class AgmarknetMetadataResolver:
     # ---------------------------------------------------------
 
     def _fetch_metadata(self) -> dict[str, Any]:
-        """Fetch AGMARKNET filter metadata."""
+        """Fetch and normalize AGMARKNET filter metadata."""
 
         url = f"{self.BASE_URL}/daily-price-arrival/filters"
 
@@ -213,20 +235,58 @@ class AgmarknetMetadataResolver:
         )
 
         logger.info(
-            f"AGMARKNET metadata response: "
-            f"{response.status_code}"
+            f"AGMARKNET metadata response: {response.status_code}"
         )
 
         response.raise_for_status()
 
-        data = response.json()
+        payload = response.json()
 
-        if not isinstance(data, dict):
+        if not isinstance(payload, dict):
             raise ValueError(
-                "Unexpected AGMARKNET metadata response."
+                "Unexpected AGMARKNET response: expected JSON object."
             )
 
-        return data
+        if payload.get("status") is False:
+            raise RuntimeError(
+                f"AGMARKNET metadata API failed: "
+                f"{payload.get('message')}"
+            )
+
+        # Extract actual metadata from the API response.
+        metadata = payload.get("data", payload)
+
+        if not isinstance(metadata, dict):
+            raise ValueError(
+                "Invalid AGMARKNET metadata: expected a dictionary."
+            )
+
+        required_keys = [
+            "cmdt_data",
+            "state_data",
+            "district_data",
+            "market_data",
+            "variety_data",
+        ]
+
+        missing = [
+            key for key in required_keys
+            if key not in metadata
+        ]
+
+        if missing:
+            raise ValueError(
+                f"AGMARKNET metadata is missing keys: {missing}"
+            )
+
+        logger.info(
+            "AGMARKNET metadata loaded: "
+            f"{len(metadata['state_data'])} states, "
+            f"{len(metadata['cmdt_data'])} commodities, "
+            f"{len(metadata['market_data'])} markets."
+        )
+
+        return metadata
 
     # ---------------------------------------------------------
     # Helpers
