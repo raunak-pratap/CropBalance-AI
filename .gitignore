@@ -103,3 +103,7 @@ coverage.xml
 *.temp
 .cache/
 node_modules/
+
+# Monthly forecasting experiment outputs
+data/external/india-mandi-arrivals/
+data/training/monthly_maharashtra/
