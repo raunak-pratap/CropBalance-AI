@@ -1,0 +1,38 @@
+{
+  "input": "data/raw/agmarknet_weekly/dharashiv_prices_v2.csv",
+  "rows": 281,
+  "unique_crops": 4,
+  "unique_markets": 8,
+  "positive_numeric_reported_rows": 114,
+  "missing_or_invalid_price_rows": 167,
+  "invalid_date_rows": 0,
+  "duplicate_or_conflicting_groups": 55,
+  "price_unit_values": [
+    "NR",
+    "Rs./Quintal"
+  ],
+  "source_values": [
+    "agmarknet"
+  ],
+  "price_status_counts": {
+    "not_reported": 167,
+    "reported_unverified_metric": 114
+  },
+  "arrivals_rows": 0,
+  "variety_values": [
+    "Onion - Red",
+    "Soyabean - Other",
+    "Soyabean - Yellow",
+    "Tomato - Other",
+    "Unknown",
+    "Wheat - Maharashtra 2189",
+    "Wheat - Other"
+  ],
+  "outlier_flags_review_only": 7,
+  "coverage_note": "Gaps are calendar gaps between reported observations; this does not infer mandi trading/closure days.",
+  "price_semantics_note": "Weekly collector stores the reported value as unverified; do not rename it modal without an endpoint-specific schema confirmation.",
+  "arrivals_note": "The weekly commodity-price response used by the collector does not supply arrivals; missing arrivals are not zero.",
+  "collection_run_status_counts": {
+    "success_with_observations": 32
+  }
+}

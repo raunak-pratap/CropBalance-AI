@@ -1,0 +1,8 @@
+crop,market,observation_date,reported_price,q1,q3,flag
+soybean,APMC Kalamb,2026-10-27,7211.0,7110.0,7150.0,IQR_outlier_review_only
+soybean,APMC Kalamb,2026-10-27,7211.0,7110.0,7150.0,IQR_outlier_review_only
+soybean,APMC Kalamb,2026-10-29,6900.0,7110.0,7150.0,IQR_outlier_review_only
+soybean,APMC Kalamb,2026-10-29,6900.0,7110.0,7150.0,IQR_outlier_review_only
+tomato,APMC Dharashiv,2026-10-25,750.0,987.5,1125.0,IQR_outlier_review_only
+wheat,APMC Tuljapur,2026-10-27,2625.0,2643.75,2650.0,IQR_outlier_review_only
+wheat,APMC Tuljapur,2026-10-27,2625.0,2643.75,2650.0,IQR_outlier_review_only

@@ -1,0 +1,56 @@
+observation_date,market_id,commodity_id,variety,price_unit,data_source,endpoint,row_count,distinct_price_values,values
+2026-10-26,1599,1,Wheat - Maharashtra 2189,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,3000.0
+2026-10-26,1599,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7110.0
+2026-10-26,1600,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6979.0
+2026-10-26,1959,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6500.0
+2026-10-26,1960,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
+2026-10-26,1961,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
+2026-10-26,1962,1,Wheat - Maharashtra 2189,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,2350.0
+2026-10-26,1962,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6850.0
+2026-10-27,1599,1,Wheat - Maharashtra 2189,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,2701.0
+2026-10-27,1599,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7211.0
+2026-10-27,1600,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6913.0
+2026-10-27,1655,23,Onion - Red,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,3200.0
+2026-10-27,1655,65,Tomato - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,875.0
+2026-10-27,1960,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6900.0
+2026-10-27,1961,1,Wheat - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,2625.0
+2026-10-27,1961,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
+2026-10-27,1962,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6900.0
+2026-10-27,2053,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
+2026-10-28,1599,1,Wheat - Maharashtra 2189,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,3551.0
+2026-10-28,1599,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7150.0
+2026-10-28,1600,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6769.0
+2026-10-28,1655,23,Onion - Red,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,3525.0
+2026-10-28,1655,65,Tomato - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,1025.0
+2026-10-28,1960,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6550.0
+2026-10-28,1961,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6800.0
+2026-10-28,1962,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6850.0
+2026-10-28,2053,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
+2026-10-29,1599,1,Wheat - Maharashtra 2189,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,3751.0
+2026-10-29,1599,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6900.0
+2026-10-29,1600,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6728.0
+2026-10-29,1655,23,Onion - Red,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,2800.0
+2026-10-29,1655,65,Tomato - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,1125.0
+2026-10-29,1959,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6000.0
+2026-10-29,1960,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6800.0
+2026-10-29,1961,1,Wheat - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,2650.0
+2026-10-29,1961,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6700.0
+2026-10-29,1962,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6750.0
+2026-10-30,1599,1,Wheat - Maharashtra 2189,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,3000.0
+2026-10-30,1599,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7125.0
+2026-10-30,1655,23,Onion - Red,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,2750.0
+2026-10-30,1655,65,Tomato - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,1125.0
+2026-10-30,1959,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6700.0
+2026-10-30,1960,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6500.0
+2026-10-30,1961,1,Wheat - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,2650.0
+2026-10-30,1961,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6800.0
+2026-10-30,1962,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6750.0
+2026-10-30,2053,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
+2026-10-31,1600,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6886.0
+2026-10-31,1655,23,Onion - Red,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,3650.0
+2026-10-31,1655,65,Tomato - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,1175.0
+2026-10-31,1959,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
+2026-10-31,1961,1,Wheat - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,2650.0
+2026-10-31,1961,13,Soyabean - Other,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
+2026-10-31,1962,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,6750.0
+2026-10-31,2053,13,Soyabean - Yellow,Rs./Quintal,agmarknet,/prices-and-arrivals/commodity-price/lastweek,2,1,7000.0
