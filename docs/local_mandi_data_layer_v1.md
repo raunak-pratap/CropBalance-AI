@@ -64,3 +64,44 @@ The prior weekly sync reported 57 valid observations across four crops and eight
 - API failure and no-data responses are not the same as a market reporting zero price; request status is stored separately.
 - The raw response files are local research evidence and are ignored by Git; never commit API secrets or large raw archives.
 - CAPTCHA-protected endpoints are not bypassed.
+
+## Archive v3 Migration — 4 November 2026
+
+### Canonical archive
+
+- Active archive: `data/raw/agmarknet_weekly/dharashiv_prices_v3.csv`
+- Preserved v2 archive: `data/raw/agmarknet_weekly/dharashiv_prices_v2.csv`
+- Pre-migration backup: `data/raw/agmarknet_weekly/backups/dharashiv_prices_v2_pre_v3.csv`
+
+### Migration results
+
+| Metric                               | Result |
+| ------------------------------------ | -----: |
+| Original v2 observations             |    450 |
+| Consolidated v3 observations         |    226 |
+| Raw responses archived               |    224 |
+| Legacy records without raw responses |      2 |
+| Missing archived raw files           |      0 |
+| Duplicate observation identities     |      0 |
+
+### Provenance tracking
+
+The `provenance_status` column identifies:
+
+- `raw_response_archived`: Raw API response path is recorded and the file was verified during migration.
+- `legacy_import_raw_unavailable`: Legacy observation imported without its original raw response.
+
+### Collector behavior
+
+The weekly collector now writes to v3. When v3 exists, it loads v3 without re-importing the legacy CSV. Legacy import remains available when initializing an archive that does not yet exist.
+
+### Validation
+
+- Archive unit tests: 12 passed.
+- Weekly collector tests: 2 passed.
+- Semantic duplicate consolidation and idempotency verified.
+- Original v2 archive and backup preserved.
+
+### Data limitations
+
+Price semantics remain unverified. `NR` remains missing rather than zero. Arrivals are not fabricated. The archive is a local research dataset, not yet a validated daily forecasting dataset.

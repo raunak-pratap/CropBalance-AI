@@ -12,7 +12,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-DEFAULT_INPUT = Path("data/raw/agmarknet_weekly/dharashiv_prices_v2.csv")
+DEFAULT_INPUT = Path("data/raw/agmarknet_weekly/dharashiv_prices_v3.csv")
 DEFAULT_RUNS = Path("data/raw/agmarknet_weekly/collection_runs.csv")
 DEFAULT_OUTPUT = Path("data/processed/dharashiv_mandi_audit")
 from services.agmarknet_local_archive import parse_agmarknet_date

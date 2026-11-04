@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import argparse
 import json
 import re
 import time
@@ -56,7 +57,7 @@ CROPS = {
     "tomato": {"id": 65, "name": "Tomato"},
 }
 OUTPUT_DIR = Path("data/raw/agmarknet_weekly")
-OBSERVATIONS_FILE = OUTPUT_DIR / "dharashiv_prices_v2.csv"
+OBSERVATIONS_FILE = OUTPUT_DIR / "dharashiv_prices_v3.csv"
 RUNS_FILE = OUTPUT_DIR / "collection_runs.csv"
 RAW_DIR = OUTPUT_DIR / "responses"
 
@@ -165,6 +166,14 @@ def collect_one(session: requests.Session, crop: str, market: str, market_id: in
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Collect weekly AGMARKNET price reports for "
+            "Dharashiv district markets."
+        )
+    )
+    parser.parse_args()
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     session = create_session()
@@ -206,14 +215,23 @@ def main() -> int:
             time.sleep(0.3)
 
     existing_frames = []
-    if OBSERVATIONS_FILE.exists():
-        existing_frames.append(pd.read_csv(OBSERVATIONS_FILE, dtype=str))
     legacy_file = OUTPUT_DIR / "dharashiv_prices.csv"
-    if legacy_file.exists():
+
+    if OBSERVATIONS_FILE.exists():
+        existing_frames.append(
+            pd.read_csv(OBSERVATIONS_FILE, dtype=str)
+        )
+    elif legacy_file.exists():
         legacy = pd.read_csv(legacy_file, dtype=str)
-        existing_frames.append(normalize_legacy_archive(legacy))
-    existing = (pd.concat(existing_frames, ignore_index=True, sort=False)
-                if existing_frames else pd.DataFrame(columns=OBSERVATION_COLUMNS))
+        existing_frames.append(
+            normalize_legacy_archive(legacy)
+        )
+
+    existing = (
+        pd.concat(existing_frames, ignore_index=True, sort=False)
+        if existing_frames
+        else pd.DataFrame(columns=OBSERVATION_COLUMNS)
+    )
     incoming = pd.DataFrame(new_rows, columns=OBSERVATION_COLUMNS)
     merged = merge_observations(existing, incoming)
     merged.to_csv(OBSERVATIONS_FILE, index=False)

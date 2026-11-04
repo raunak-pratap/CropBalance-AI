@@ -90,6 +90,134 @@ class TestAgmarknetLocalArchive(unittest.TestCase):
         self.assertFalse(migrated.loc[0, "price_semantics_verified"])
         self.assertIsNone(migrated.loc[0, "arrivals_value"])
 
+    
+    def test_merge_collapses_numeric_format_duplicates(self):
+        base = {
+            "observation_date": "2026-10-26",
+            "market_id": 1599,
+            "commodity_id": 1,
+            "variety": "Wheat - Maharashtra",
+            "price_unit": "Rs./Quintal",
+            "data_source": "agmarknet",
+            "endpoint": "/weekly",
+            "reported_price_raw": "3000",
+            "reported_price": 3000.0,
+            "price_status": "reported_unverified_metric",
+            "fetched_at_utc": "2026-11-03T10:00:00+00:00",
+        }
+
+        repeated = {
+            **base,
+            "reported_price_raw": "3000.0",
+            "fetched_at_utc": "2026-11-04T10:00:00+00:00",
+        }
+
+        result = merge_observations(
+            pd.DataFrame([base]),
+            pd.DataFrame([repeated]),
+        )
+
+        self.assertEqual(len(result), 1)
+        self.assertFalse(bool(result.iloc[0]["conflict_flag"]))
+        self.assertEqual(
+            result.iloc[0]["fetched_at_utc"],
+            "2026-11-04T10:00:00+00:00",
+        )
+
+    def test_merge_detects_unit_change_as_conflict(self):
+        base = {
+            "observation_date": "2026-10-26",
+            "market_id": 1599,
+            "commodity_id": 1,
+            "variety": "Wheat - Maharashtra",
+            "price_unit": "Rs./Quintal",
+            "data_source": "agmarknet",
+            "endpoint": "/weekly",
+            "reported_price_raw": "3000",
+            "reported_price": 3000.0,
+            "price_status": "reported_unverified_metric",
+        }
+
+        changed_unit = {
+            **base,
+            "price_unit": "Rs./Kg",
+            "fetched_at_utc": "2026-11-04T10:00:00+00:00",
+        }
+
+        result = merge_observations(
+            pd.DataFrame([base]),
+            pd.DataFrame([changed_unit]),
+        )
+
+        self.assertEqual(len(result), 2)
+        self.assertTrue(result["conflict_flag"].astype(bool).all())
+
+    def test_merge_collapses_repeated_nr_records(self):
+        base = {
+            "observation_date": "2026-10-26",
+            "market_id": 1599,
+            "commodity_id": 23,
+            "variety": "Unknown",
+            "price_unit": "NR",
+            "data_source": "agmarknet",
+            "endpoint": "/weekly",
+            "reported_price_raw": "NR",
+            "reported_price": None,
+            "price_status": "not_reported",
+        }
+
+        repeated = {
+            **base,
+            "fetched_at_utc": "2026-11-04T10:00:00+00:00",
+        }
+
+        result = merge_observations(
+            pd.DataFrame([base]),
+            pd.DataFrame([repeated]),
+        )
+
+        self.assertEqual(len(result), 1)
+        self.assertFalse(bool(result.iloc[0]["conflict_flag"]))
+
+def test_legacy_observation_has_legacy_provenance(self):
+    legacy = pd.DataFrame([{
+        "date": "2026-10-25",
+        "market": "APMC Dharashiv",
+        "market_id": 1655,
+        "crop": "onion",
+        "commodity_id": 23,
+        "reported_price": "3500",
+    }])
+
+    result = normalize_legacy_archive(legacy)
+
+    self.assertEqual(
+        result.iloc[0]["provenance_status"],
+        "legacy_import_raw_unavailable",
+    )
+    self.assertTrue(pd.isna(result.iloc[0]["raw_response_file"]))
+
+
+def test_merge_preserves_provenance_status(self):
+    legacy = pd.DataFrame([{
+        "date": "2026-10-25",
+        "market": "APMC Dharashiv",
+        "market_id": 1655,
+        "crop": "onion",
+        "commodity_id": 23,
+        "reported_price": "3500",
+    }])
+
+    result = merge_observations(
+        normalize_legacy_archive(legacy),
+        pd.DataFrame(),
+    )
+
+    self.assertEqual(
+        result.iloc[0]["provenance_status"],
+        "legacy_import_raw_unavailable",
+    )
+
 
 if __name__ == "__main__":
     unittest.main()

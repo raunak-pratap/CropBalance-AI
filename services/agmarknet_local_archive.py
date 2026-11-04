@@ -19,7 +19,8 @@ OBSERVATION_COLUMNS = [
     "variety", "variety_id", "reported_price_raw", "reported_price",
     "price_metric", "price_semantics_verified", "price_unit",
     "arrivals_value", "arrivals_unit", "price_status", "data_source",
-    "endpoint", "fetched_at_utc", "raw_response_file", "conflict_flag",
+    "endpoint", "fetched_at_utc", "raw_response_file",
+    "provenance_status", "conflict_flag",
 ]
 
 RUN_COLUMNS = [
@@ -30,16 +31,18 @@ RUN_COLUMNS = [
 ]
 
 BASE_OBSERVATION_KEY = [
-    "observation_date", "market_id", "commodity_id", "variety", "price_unit",
-    "data_source", "endpoint",
+    "observation_date",
+    "market_id",
+    "commodity_id",
+    "variety",
+    "data_source",
+    "endpoint",
 ]
-
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-
-def parse_agmarknet_date(value: Any) -> pd.Timestamp | pd.NaT:
+def parse_agmarknet_date(value: Any) -> pd.Timestamp:
     """Parse common date-key formats without assuming US month-first dates."""
     if value is None:
         return pd.NaT
@@ -131,6 +134,11 @@ def make_observation(
         "endpoint": endpoint,
         "fetched_at_utc": fetched_at_utc,
         "raw_response_file": raw_response_file,
+        "provenance_status": (
+            "raw_response_archived"
+            if raw_response_file
+            else "raw_response_unavailable"
+        ),
         "conflict_flag": False,
     }
 
@@ -181,42 +189,122 @@ def normalize_legacy_archive(legacy: pd.DataFrame) -> pd.DataFrame:
             "endpoint": "/prices-and-arrivals/commodity-price/lastweek",
             "fetched_at_utc": fetched_at,
             "raw_response_file": None,
+            "provenance_status": "legacy_import_raw_unavailable",
             "conflict_flag": False,
         })
     return pd.DataFrame(rows, columns=OBSERVATION_COLUMNS)
 
 
-def merge_observations(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataFrame:
-    """Idempotently merge exact repeats while retaining conflicting reports.
 
-    Exact repeated rows are collapsed. If the same observation identity is
-    reported with a different raw value, both versions are preserved and
-    marked as conflicting rather than silently overwriting one another.
-    """
-    frames = [frame.copy() for frame in (existing, incoming) if frame is not None and not frame.empty]
+def _normalized_measurement(row: pd.Series) -> tuple:
+    """Normalize a reported measurement for semantic duplicate detection."""
+    raw = row.get("reported_price_raw")
+    status = str(row.get("price_status") or "").strip().lower()
+
+    price, classified_status = classify_reported_price(raw)
+
+    unit = row.get("price_unit")
+    unit = None if pd.isna(unit) else str(unit).strip().lower()
+    unit = unit or None
+
+    if price is not None and classified_status == "reported_unverified_metric":
+        value = ("numeric", float(price))
+    else:
+        raw_text = "" if pd.isna(raw) else str(raw).strip().upper()
+        value = ("non_numeric", status or classified_status, raw_text)
+
+    # Unit is measurement metadata, not observation identity.
+    return (*value, unit)
+
+
+def merge_observations(
+    existing: pd.DataFrame,
+    incoming: pd.DataFrame,
+) -> pd.DataFrame:
+    """Collapse semantic repeats and preserve genuinely conflicting reports."""
+    frames = [
+        frame.copy()
+        for frame in (existing, incoming)
+        if frame is not None and not frame.empty
+    ]
+
     if not frames:
         return pd.DataFrame(columns=OBSERVATION_COLUMNS)
+
     combined = pd.concat(frames, ignore_index=True, sort=False)
+
     for column in OBSERVATION_COLUMNS:
         if column not in combined.columns:
+
             combined[column] = None
+    missing_provenance = combined["provenance_status"].isna()
+
+    combined.loc[
+        missing_provenance & combined["raw_response_file"].isna(),
+        "provenance_status",
+    ] = "legacy_import_raw_unavailable"
+
+    combined.loc[
+        missing_provenance & combined["raw_response_file"].notna(),
+        "provenance_status",
+    ] = "raw_response_archived"
+
     combined["observation_date"] = combined["observation_date"].map(
-        lambda x: parse_agmarknet_date(x).date().isoformat()
-        if not pd.isna(parse_agmarknet_date(x)) else None
+        lambda x: (
+            parse_agmarknet_date(x).date().isoformat()
+            if not pd.isna(parse_agmarknet_date(x))
+            else None
+        )
     )
-    # Include the raw reported value in the exact-repeat identity. Different
-    # values for the same date/market/crop/variety/unit remain visible.
-    exact_key = BASE_OBSERVATION_KEY + ["reported_price_raw", "price_status"]
-    combined = combined.drop_duplicates(subset=exact_key, keep="last")
-    grouped = combined.groupby(BASE_OBSERVATION_KEY, dropna=False)["reported_price_raw"].transform(
-        lambda values: values.nunique(dropna=False)
+
+    # Keep records with incomplete identity fields separate from valid groups.
+    identity_columns = BASE_OBSERVATION_KEY
+
+    combined["_identity_complete"] = combined[identity_columns].notna().all(axis=1)
+
+    # A semantic signature treats 3000 and 3000.0 as the same price.
+    combined["_measurement"] = combined.apply(
+        _normalized_measurement, axis=1
     )
-    combined["conflict_flag"] = grouped.gt(1)
-    combined = combined.reindex(columns=OBSERVATION_COLUMNS)
-    return combined.sort_values(
+
+    # Collapse repeated measurements, keeping the latest fetched record.
+    combined = combined.sort_values(
+        "fetched_at_utc", na_position="first"
+    )
+
+    complete = combined[combined["_identity_complete"]].copy()
+    incomplete = combined[~combined["_identity_complete"]].copy()
+
+    if not complete.empty:
+        complete = complete.drop_duplicates(
+            subset=identity_columns + ["_measurement"],
+            keep="last",
+        )
+
+        conflict_counts = complete.groupby(
+            identity_columns,
+            dropna=False,
+        )["_measurement"].transform("nunique")
+
+        complete["conflict_flag"] = conflict_counts.gt(1)
+
+    if not incomplete.empty:
+        # Do not merge records whose identity cannot be established safely.
+        incomplete["conflict_flag"] = False
+
+    result = pd.concat(
+        [complete, incomplete],
+        ignore_index=True,
+        sort=False,
+    )
+
+    result = result.reindex(columns=OBSERVATION_COLUMNS)
+
+    return result.sort_values(
         ["crop", "market", "observation_date", "variety", "fetched_at_utc"],
         na_position="last",
     ).reset_index(drop=True)
+
 
 
 def append_run_log(existing: pd.DataFrame, incoming_rows: Iterable[dict[str, Any]]) -> pd.DataFrame:
