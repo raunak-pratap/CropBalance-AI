@@ -16,6 +16,7 @@ from config import SUPPORTED_CROPS, API_CONFIG, PATH_CONFIG
 from fetcher import MandiPriceFetcher, WeatherFetcher
 from predictor import CropPredictor
 from disease.disease_predictor import DiseasePredictor
+from services.local_mandi_service import LocalMandiService
 
 
 # =========================================================
@@ -38,6 +39,7 @@ app.add_middleware(
 _cache: Dict[str, dict] = {}
 _predictors: Dict[str, CropPredictor] = {}
 _disease_predictor: DiseasePredictor = None
+_local_mandi_service = LocalMandiService()
 
 
 # =========================================================
@@ -249,6 +251,124 @@ def get_price_history(
     )
 
     return df.to_dict(orient="records")
+
+# =========================================================
+# Local Dharashiv Mandi Intelligence
+# =========================================================
+
+def run_local_mandi_query(operation):
+    """
+    Execute a local mandi service operation and translate 
+    service errors into appropriate HTTP responses.
+    """
+    try:
+        return operation()
+    
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=str(exc)
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=str(exc)
+        )
+
+
+@app.get("/markets/local", tags=["local_mandi"])
+def get_local_mandi_markets():
+    """
+    Return all markets available in the local Dharashiv mandi service.
+    """
+    return run_local_mandi_query(
+        lambda: _local_mandi_service.get_markets()
+    )
+
+@app.get("/mandi/prices/latest", tags=["local_mandi"])
+def get_latest_local_mandi_prices(
+    crop: str = Query(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Crop name, for example soyabean or wheat"
+    )
+):
+    """
+    Return the latest archeved observation for ezch market.
+    Missing prices remain missing; they are never treated as zero.
+    """
+    crop = crop.strip().lower()
+
+    if not crop:
+        raise HTTPException(
+            status_code=422,
+            detail="Crop name cannot be empty"
+        )
+
+    return run_local_mandi_query(
+        lambda: _local_mandi_service.get_latest_prices(crop)
+    )
+
+
+@app.get("/mandi/prices/history", tags=["local_mandi"])
+def get_local_mandi_history(
+    crop: str = Query(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Crop name, for example soyabean or wheat"
+    ),
+    market_id: str = Query(
+        ...,
+        min_length=1,
+        description="AGMARKNET market ID, for example 1599 for kalamb"
+    )
+):
+    """
+    Return historical observations for a crop in a specific market.
+    """
+    crop = crop.strip().lower()
+    market_id = market_id.strip()
+
+    if not crop:
+        raise HTTPException(
+            status_code=422,
+            detail="Both crop and market_id are required"
+        )
+
+    return run_local_mandi_query(
+        lambda: _local_mandi_service.get_market_history(
+            crop=crop,
+            market_id=market_id
+        )
+    )
+
+@app.get("/mandi/prices/compare", tags=["local_mandi"])
+def compare_local_mandi_prices(
+    crop: str = Query(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Crop name, for example soybean"
+    )
+):
+    """
+    Compare reported values across markets only when
+    date, unit, metric label, and variety match.
+    """
+    crop = crop.strip().lower()
+
+    if not crop:
+        raise HTTPException(
+            status_code=422,
+            detail="Crop name cannot be empty."
+        )
+
+    return run_local_mandi_query(
+        lambda: _local_mandi_service.compare_markets(crop)
+    )
 
 
 # =========================================================

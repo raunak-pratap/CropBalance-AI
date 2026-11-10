@@ -184,8 +184,8 @@ class LocalMandiService:
         # temporary values used internally for filtering and comparisons.
         frame["_date"] = pd.to_datetime(
             frame["observation_date"].map(_clean_text),
+            format="%Y-%m-%d",
             errors="coerce",
-            dayfirst=True,
         )
         frame["_crop_key"] = frame.apply(
             lambda row: (
