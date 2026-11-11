@@ -106,6 +106,94 @@ def extract_state(text: str) -> Optional[str]:
 
     return None
 
+def is_local_mandi_request(text: str) -> bool:
+    """Identify requests for archived local mandi information."""
+
+    text = text.casefold()
+
+    # Explicit forecasts should continue using the LSTM price tool.
+    forecast_terms = [
+        "forecast",
+        "predict",
+        "prediction",
+        "future price",
+        "future prices",
+        "expected price",
+        "expected prices",
+    ]
+
+    if any(term in text for term in forecast_terms):
+        return False
+
+    local_markers = [
+        "mandi",
+        "apmc",
+        "local market",
+        "local markets",
+        "local price",
+        "local prices",
+        "nearby market",
+        "nearby markets",
+        "market price",
+        "market prices",
+        "compare market",
+        "compare markets",
+        "market-wise",
+        "market wise",
+        "prices in dharashiv",
+        "price in dharashiv",
+        "dharashiv prices",
+    ]
+
+    if any(marker in text for marker in local_markers):
+        return True
+
+    # Osmanabad is an older name for the district represented
+    # by the current Dharashiv archive.
+    has_dharashiv_location = (
+        "dharashiv" in text or "osmanabad" in text
+    )
+
+    has_price_context = any(
+        word in text.split()
+        for word in ["price", "prices", "market", "bhav"]
+    )
+
+    return has_dharashiv_location and has_price_context
+
+
+def is_market_comparison_request(text: str) -> bool:
+    """Determine whether the user wants markets ranked or compared."""
+
+    text = text.casefold()
+
+    comparison_terms = [
+        "compare",
+        "comparison",
+        "highest",
+        "rank",
+        "ranked",
+        "which market",
+        "which mandi",
+        "top market",
+        "top mandi",
+        "best market",
+        "best mandi",
+    ]
+
+    return any(term in text for term in comparison_terms)
+
+
+def extract_district(text: str) -> Optional[str]:
+    """Recognise the district currently supported by the local archive."""
+
+    text = text.casefold()
+
+    if "dharashiv" in text or "osmanabad" in text:
+        return "Dharashiv"
+
+    return None
+
 
 def extract_intent(text: str) -> str:
     """Determine the user's main CropBalance intent."""
@@ -136,7 +224,10 @@ def extract_intent(text: str) -> str:
     if any(keyword in text for keyword in disease_keywords):
         return "disease_detection"
 
-    if any(keyword in text for keyword in price_keywords):
+    if is_local_mandi_request(text):
+        return "local_mandi"
+
+    elif any(keyword in text for keyword in price_keywords):
         return "price_prediction"
 
     weather_keywords = [
@@ -218,7 +309,10 @@ def extract_intents(text: str) -> list[str]:
     if any(keyword in text for keyword in disease_keywords):
         intents.append("disease_detection")
 
-    if any(keyword in text for keyword in price_keywords):
+    if is_local_mandi_request(text):
+        intents.append("local_mandi")
+
+    elif any(keyword in text for keyword in price_keywords):
         intents.append("price_prediction")
 
     if any(keyword in text for keyword in weather_keywords):
@@ -252,4 +346,6 @@ def parse_request(text: str) -> Dict:
         "intents": extract_intents(text),
         "crop": extract_crop(text),
         "state": extract_state(text),
+        "district": extract_district(text),
+        "compare_markets": is_market_comparison_request(text),
     }

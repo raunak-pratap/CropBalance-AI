@@ -179,44 +179,44 @@ class TestAgmarknetLocalArchive(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertFalse(bool(result.iloc[0]["conflict_flag"]))
 
-def test_legacy_observation_has_legacy_provenance(self):
-    legacy = pd.DataFrame([{
-        "date": "2026-10-25",
-        "market": "APMC Dharashiv",
-        "market_id": 1655,
-        "crop": "onion",
-        "commodity_id": 23,
-        "reported_price": "3500",
-    }])
+    def test_legacy_observation_has_legacy_provenance(self):
+        legacy = pd.DataFrame([{
+            "date": "2026-10-25",
+            "market": "APMC Dharashiv",
+            "market_id": 1655,
+            "crop": "onion",
+            "commodity_id": 23,
+            "reported_price": "3500",
+        }])
 
-    result = normalize_legacy_archive(legacy)
+        result = normalize_legacy_archive(legacy)
 
-    self.assertEqual(
-        result.iloc[0]["provenance_status"],
-        "legacy_import_raw_unavailable",
-    )
-    self.assertTrue(pd.isna(result.iloc[0]["raw_response_file"]))
+        self.assertEqual(
+            result.iloc[0]["provenance_status"],
+            "legacy_import_raw_unavailable",
+        )
+        self.assertTrue(pd.isna(result.iloc[0]["raw_response_file"]))
 
 
-def test_merge_preserves_provenance_status(self):
-    legacy = pd.DataFrame([{
-        "date": "2026-10-25",
-        "market": "APMC Dharashiv",
-        "market_id": 1655,
-        "crop": "onion",
-        "commodity_id": 23,
-        "reported_price": "3500",
-    }])
+    def test_merge_preserves_provenance_status(self):
+        legacy = pd.DataFrame([{
+            "date": "2026-10-25",
+            "market": "APMC Dharashiv",
+            "market_id": 1655,
+            "crop": "onion",
+            "commodity_id": 23,
+            "reported_price": "3500",
+        }])
 
-    result = merge_observations(
-        normalize_legacy_archive(legacy),
-        pd.DataFrame(),
-    )
+        result = merge_observations(
+            normalize_legacy_archive(legacy),
+            pd.DataFrame(),
+        )
 
-    self.assertEqual(
-        result.iloc[0]["provenance_status"],
-        "legacy_import_raw_unavailable",
-    )
+        self.assertEqual(
+            result.iloc[0]["provenance_status"],
+            "legacy_import_raw_unavailable",
+        )
 
 
 if __name__ == "__main__":

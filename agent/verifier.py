@@ -38,6 +38,77 @@ def verify_result(tool: str, result: Dict) -> Dict:
             }
         }
 
+    if tool == "get_local_mandi_prices":
+        query_mode = result.get("query_mode", "latest")
+        issues = []
+
+        if result.get("is_live") is not False:
+            issues.append(
+                "Local mandi result must be identified as archived, not live."
+            )
+
+        if query_mode == "comparison":
+            comparisons = result.get("comparisons")
+
+            if not isinstance(comparisons, list):
+                issues.append(
+                    "Market comparison result must contain a comparisons list."
+                )
+
+            elif result.get("status") == "ok" and not comparisons:
+                issues.append(
+                    "Comparison status is ok, but no comparison groups exist."
+                )
+
+            expected_statuses = {
+                "ok",
+                "insufficient_comparable_markets",
+                "no_observations",
+                "no_valid_dates",
+            }
+
+        else:
+            records = result.get("records")
+
+            if not isinstance(records, list):
+                issues.append(
+                    "Latest mandi result must contain a records list."
+                )
+
+            elif result.get("status") == "ok" and not records:
+                issues.append(
+                    "Latest-price status is ok, but no records exist."
+                )
+
+            expected_statuses = {
+                "ok",
+                "no_numeric_prices",
+                "no_observations",
+                "no_valid_dates",
+            }
+
+        if result.get("status") not in expected_statuses:
+            issues.append(
+                f"Unexpected local mandi status: {result.get('status')}"
+            )
+
+        if issues:
+            return {
+                "valid": False,
+                "issues": issues,
+            }
+
+        return {
+            "valid": True,
+            "issues": [],
+            "checks": {
+                "query_mode": query_mode,
+                "district": result.get("district"),
+                "is_live": False,
+                "status": result.get("status"),
+            },
+        }
+
     if tool == "get_weather":
         weather = result.get("weather")
 

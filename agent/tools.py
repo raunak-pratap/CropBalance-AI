@@ -5,12 +5,14 @@ from services.price_service import PriceService
 from services.weather_service import WeatherService
 from services.agriculture_advice_service import AgricultureAdviceService
 from agent.context.postgres_memory import PostgresContextStore
+from services.local_mandi_service import LocalMandiService
 
 _disease_service = None
 _price_service = None
 _weather_service = None
 _agriculture_advice_service = None
 _context_store = None
+_local_mandi_service = None
 
 
 def _get_disease_service() -> DiseaseService:
@@ -30,6 +32,38 @@ def _get_price_service() -> PriceService:
 
     return _price_service
 
+def _get_local_mandi_service() -> LocalMandiService:
+    """
+    Create the local mandi service only when it is first needed
+    """
+    global _local_mandi_service 
+
+    if _local_mandi_service is None:
+        _local_mandi_service = LocalMandiService()
+
+    return _local_mandi_service
+
+def get_local_mandi_prices(
+        crop: str,
+        compare: bool = False,
+) -> Dict:
+    """
+    Retrive local Dharashiv mandi observations
+    compare=False: latest observation from each market.
+    compare=True: compare matching market observations.
+    """
+
+    service = _get_local_mandi_service()
+
+    if compare:
+        result = service.compare_markets(crop)
+        result['query_mode'] = "comparison"
+    else:
+        result = service.get_latest_prices(crop)
+        result['query_mode'] = "latest"
+
+    return result
+        
 
 def detect_disease(image_path: str) -> Dict:
     """

@@ -4,6 +4,7 @@ from agent.tools import (
     detect_disease,
     predict_price,
     get_weather,
+    get_local_mandi_prices,
     get_agriculture_advice,
     get_farmer_context,
     update_farmer_context,
@@ -60,6 +61,54 @@ def _execute_tool(
         result = predict_price(
             crop=crop,
             state=state,
+        )
+
+        return {
+            "status": "success",
+            "result": result,
+        }
+
+    if tool == "get_local_mandi_prices":
+        crop = crop or parsed.get("crop")
+
+        if not crop:
+            return {
+                "status": "missing_input",
+                "missing": ["crop"],
+                "message": (
+                    "Please tell me which crop you want "
+                    "local mandi prices for."
+                ),
+                "result": None,
+            }
+
+        district = parsed.get("district")
+
+        if district and district.casefold() != "dharashiv":
+            return {
+                "status": "unsupported",
+                "message": (
+                    "The local mandi archive currently supports "
+                    "Dharashiv district only."
+                ),
+                "result": None,
+            }
+
+        requested_state = state or parsed.get("state")
+
+        if requested_state and requested_state.casefold() != "maharashtra":
+            return {
+                "status": "unsupported",
+                "message": (
+                    "The local mandi archive currently covers "
+                    "Dharashiv, Maharashtra only."
+                ),
+                "result": None,
+            }
+
+        result = get_local_mandi_prices(
+            crop=crop,
+            compare=bool(parsed.get("compare_markets", False)),
         )
 
         return {

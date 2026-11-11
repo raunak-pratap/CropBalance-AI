@@ -44,6 +44,120 @@ def build_response(
             f"{source_note}"
         )
 
+        # ---------------------------------------------------------
+    # LOCAL MANDI INTELLIGENCE
+    # ---------------------------------------------------------
+    if "get_local_mandi_prices" in verified_results:
+        data = verified_results["get_local_mandi_prices"]["result"]
+
+        crop = data.get("crop", "crop")
+        district = data.get("district", "Dharashiv")
+        query_mode = data.get("query_mode", "latest")
+
+        if query_mode == "comparison":
+            comparisons = data.get("comparisons", [])
+
+            lines = []
+
+            for group in comparisons:
+                variety = group.get("variety") or "Unspecified variety"
+                date = group.get("observation_date") or "Unknown date"
+                unit = group.get("price_unit") or "unit unavailable"
+                highest = group.get("highest_reported_value")
+                markets = group.get("highest_reported_markets", [])
+
+                if highest is None:
+                    continue
+
+                lines.append(
+                    f"{variety} ({date}): highest reported value "
+                    f"₹{highest} {unit} at {', '.join(markets)}."
+                )
+
+                for record in group.get(
+                    "records_ranked_high_to_low", []
+                ):
+                    market = record.get("market", "Unknown market")
+                    value = record.get("reported_price")
+
+                    if value is not None:
+                        lines.append(
+                            f"  - {market}: ₹{value} {unit}"
+                        )
+
+            if lines:
+                summary = (
+                    f"📊 Archived local mandi comparison for "
+                    f"{crop} in {district}:\n"
+                    + "\n".join(lines)
+                )
+            else:
+                summary = (
+                    f"📊 No comparable reported prices are currently "
+                    f"available for {crop} in {district}. "
+                    f"{data.get('message', '')}"
+                )
+
+        else:
+            records = data.get("records", [])
+            lines = []
+
+            for record in records:
+                market = record.get("market", "Unknown market")
+                variety = record.get("variety") or "Unspecified variety"
+                date = record.get("observation_date") or "Unknown date"
+                price = record.get("reported_price")
+                raw_price = record.get("reported_price_raw", "")
+
+                if price is None:
+                    price_text = (
+                        "Not reported (NR)"
+                        if str(raw_price).strip().upper() == "NR"
+                        else "Unavailable"
+                    )
+                else:
+                    unit = record.get("price_unit") or ""
+                    price_text = f"₹{price} {unit}"
+
+                lines.append(
+                    f"- {market}: {price_text}; "
+                    f"{variety}; {date}"
+                )
+
+            summary = (
+                f"📍 Latest archived mandi observations for "
+                f"{crop} in {district}:\n"
+                + (
+                    "\n".join(lines)
+                    if lines
+                    else data.get("message", "No observations found.")
+                )
+            )
+
+        quality = data.get("data_quality", {})
+
+        if quality:
+            summary += (
+                "\n\nData quality: "
+                f"{quality.get('numeric_price_count', 0)} numeric "
+                f"values from {quality.get('observation_count', 0)} "
+                "observations; "
+                f"{quality.get('missing_or_invalid_price_count', 0)} "
+                "missing or invalid values."
+            )
+
+        caveat = data.get(
+            "caveat",
+            "These are archived values, not live quotes. "
+            "The reported-price metric is not independently verified.",
+        )
+
+        summary += (
+            "\n\n⚠️ " + caveat
+        )
+
+        sections.append(summary)
+
     # ---------------------------------------------------------
     # WEATHER
     # ---------------------------------------------------------

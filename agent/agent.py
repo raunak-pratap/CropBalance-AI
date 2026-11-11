@@ -54,6 +54,24 @@ class CropBalanceAgent:
                     "state": resolved_state,
                 }
 
+        if pending["intent"] == "local_mandi":
+            if resolved_crop:
+                self.pending_request = None
+
+                return {
+                    "intent": "local_mandi",
+                    "intents": ["local_mandi"],
+                    "crop": resolved_crop,
+                    "district": (
+                        pending.get("district")
+                        or parsed.get("district")
+                    ),
+                    "compare_markets": (
+                        pending.get("compare_markets", False)
+                        or parsed.get("compare_markets", False)
+                    ),
+                }
+
         if pending["intent"] == "disease_detection":
             if image_path:
                 self.pending_request = None
@@ -209,12 +227,17 @@ class CropBalanceAgent:
                     "Please provide the missing information.",
                 )
 
-            if parsed["intent"] == "price_prediction":
+            if parsed["intent"] in [
+                "price_prediction",
+                "local_mandi",
+            ]:
                 self.pending_request = {
                     "intent": parsed["intent"],
                     "intents": parsed.get("intents", []),
                     "crop": crop or parsed.get("crop"),
                     "state": state or parsed.get("state"),
+                    "district": parsed.get("district"),
+                    "compare_markets": parsed.get("compare_markets", False),
                     "missing": [
                         missing
                         for error in errors.values()
@@ -247,6 +270,7 @@ class CropBalanceAgent:
             if parsed["intent"] in [
                 "price_prediction",
                 "disease_detection",
+                "local_mandi",
             ]:
                 self.pending_request = {
                     "intent": parsed["intent"],

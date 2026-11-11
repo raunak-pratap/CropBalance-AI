@@ -4,6 +4,7 @@ from typing import Dict
 INTENT_TO_TOOL = {
     "disease_detection": "detect_disease",
     "price_prediction": "predict_price",
+    "local_mandi": "get_local_mandi_prices",
     "weather": "get_weather",
     "agriculture_advice": "get_agriculture_advice",
     "farm_context": "get_farmer_context",
@@ -53,8 +54,7 @@ def plan_request(parsed: Dict) -> Dict:
             "tool": tools[0],
             "tools": tools,
             "reason": (
-                f"The parsed request requires the "
-                f"{tools[0]} tool."
+                f"The parsed request requires the {tools[0]} tool."
             ),
         }
 
