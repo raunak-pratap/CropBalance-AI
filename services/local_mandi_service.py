@@ -18,7 +18,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 import math
-
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 import pandas as pd
 
 
@@ -304,6 +305,52 @@ class LocalMandiService:
             ),
         }
 
+    @staticmethod
+    def _freshness_metadata(
+        frame: pd.DataFrame,
+        as_of: date | None = None,
+    ) -> dict[str, Any]:
+        """
+        Calculate archive freshness using observation dates.
+
+        Initial thresholds for this weekly data source:
+        0–7 days: fresh
+        8–14 days: aging
+        More than 14 days: stale
+        """
+
+        dates = frame["_date"].dropna()
+
+        if dates.empty:
+            return {
+                "last_observation_date": None,
+                "data_age_days": None,
+                "freshness_status": "unknown",
+            }
+
+        latest_date = pd.Timestamp(dates.max()).date()
+
+        today = as_of or datetime.now(
+            ZoneInfo("Asia/Kolkata")
+        ).date()
+
+        age_days = (today - latest_date).days
+
+        if age_days < 0:
+            status = "future_dated"
+        elif age_days <= 7:
+            status = "fresh"
+        elif age_days <= 14:
+            status = "aging"
+        else:
+            status = "stale"
+
+        return {
+            "last_observation_date": latest_date.isoformat(),
+            "data_age_days": age_days,
+            "freshness_status": status,
+        }
+
     def get_markets(self) -> dict[str, Any]:
         """Return the markets represented in the archive and their date coverage."""
         frame = self._load_archive()
@@ -341,6 +388,7 @@ class LocalMandiService:
             "status": "ok",
             "district": "Dharashiv",
             "is_live": False,
+            **self._freshness_metadata(frame),
             "market_count": len(markets),
             "markets": markets,
         }
@@ -389,6 +437,7 @@ class LocalMandiService:
             "crop": _clean_text(crop),
             "district": "Dharashiv",
             "is_live": False,
+            **self._freshness_metadata(latest),
             "record_count": len(records),
             "numeric_price_count": numeric_count,
             "records": records,
@@ -429,6 +478,7 @@ class LocalMandiService:
             ),
             "is_live": False,
             "record_count": len(records),
+            **self._freshness_metadata(history),
             "records": records,
             "data_quality": self._data_quality(history),
             "message": (
@@ -530,6 +580,7 @@ class LocalMandiService:
             "crop": _clean_text(crop),
             "district": "Dharashiv",
             "is_live": False,
+            **self._freshness_metadata(latest_rows),
             "comparison_count": len(comparisons),
             "comparisons": comparisons,
             "latest_observations": latest_records,
