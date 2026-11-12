@@ -19,6 +19,8 @@ services:
     volumes:
       - ./models:/app/models
       - ./logs:/app/logs
+      - ./main.py:/app/main.py:ro
+      - ./services/local_mandi_service.py:/app/services/local_mandi_service.py:ro
       - ./data/raw/agmarknet_weekly:/app/data/raw/agmarknet_weekly:ro
     networks:
       - cropbalance-network
