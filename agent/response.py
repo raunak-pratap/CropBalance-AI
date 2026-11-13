@@ -146,6 +146,64 @@ def build_response(
                 "missing or invalid values."
             )
 
+                # ---------------------------------------------------------
+        # DATA FRESHNESS
+        # ---------------------------------------------------------
+        freshness_status = str(
+            data.get("freshness_status") or "unknown"
+        ).casefold()
+
+        last_observation_date = data.get(
+            "last_observation_date"
+        )
+        data_age_days = data.get("data_age_days")
+
+        age_text = ""
+
+        if isinstance(data_age_days, int) and data_age_days >= 0:
+            day_label = "day" if data_age_days == 1 else "days"
+            age_text = f" ({data_age_days} {day_label} old)"
+
+        date_text = (
+            f"Latest observation: {last_observation_date}{age_text}"
+            if last_observation_date
+            else "A valid observation date is unavailable"
+        )
+
+        if freshness_status == "fresh":
+            summary += (
+                f"\n\nData freshness: Fresh. {date_text}."
+            )
+
+        elif freshness_status == "aging":
+            summary += (
+                f"\n\n⚠️ Data freshness: Aging. {date_text}. "
+                "Check a current market source before making "
+                "a selling decision."
+            )
+
+        elif freshness_status == "stale":
+            summary += (
+                f"\n\n🚨 Data freshness: Stale. {date_text}. "
+                "Do not rely on these archived observations alone "
+                "for a current selling decision. Verify directly "
+                "with the market."
+            )
+
+        elif freshness_status == "future_dated":
+            summary += (
+                f"\n\n⚠️ Data freshness warning: The latest "
+                f"observation date ({last_observation_date}) is "
+                "in the future. Verify the archive before relying "
+                "on these values."
+            )
+
+        else:
+            summary += (
+                "\n\nData freshness: Unknown. "
+                f"{date_text}."
+            )
+
         caveat = data.get(
             "caveat",
             "These are archived values, not live quotes. "

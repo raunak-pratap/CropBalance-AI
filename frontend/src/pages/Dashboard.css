@@ -1,0 +1,464 @@
+.mandi-dashboard {
+    width: min(1440px, 94%);
+    margin: 0 auto;
+    padding: 42px 0 70px;
+    color: #f3f7fb;
+}
+
+.dashboard-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.dashboard-eyebrow {
+    color: #65d6a0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+    margin-bottom: 10px;
+}
+
+.dashboard-heading h1 {
+    font-size: clamp(28px, 4vw, 42px);
+    margin-bottom: 10px;
+}
+
+.dashboard-subtitle {
+    color: #aebfd0;
+    line-height: 1.6;
+}
+
+.archive-tag {
+    flex-shrink: 0;
+    border: 1px solid #52708a;
+    border-radius: 30px;
+    padding: 10px 15px;
+    color: #c3d4e4;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+}
+
+.dashboard-controls {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px;
+    margin-bottom: 22px;
+    border: 1px solid #24415c;
+    border-radius: 16px;
+    background: rgba(12, 35, 57, 0.85);
+}
+
+.dashboard-controls label {
+    display: grid;
+    gap: 8px;
+    min-width: 210px;
+    color: #bdcddd;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.dashboard-controls select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #34536d;
+    border-radius: 9px;
+    outline: none;
+    background: #102943;
+    color: white;
+    font-size: 14px;
+}
+
+.dashboard-controls select:focus {
+    border-color: #65d6a0;
+}
+
+.dashboard-refresh {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 9px;
+    background: #219b68;
+    color: white;
+    font-weight: 800;
+}
+
+.dashboard-refresh:hover {
+    background: #28b57a;
+}
+
+.dashboard-refresh:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.dashboard-loading,
+.dashboard-error,
+.empty-state {
+    padding: 20px;
+    border: 1px solid #34516c;
+    border-radius: 12px;
+    color: #c7d4e0;
+    background: #102943;
+}
+
+.dashboard-error {
+    margin: 16px 0;
+    border-color: #a65d5d;
+    color: #ffd1d1;
+}
+
+.freshness-notice {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 19px 22px;
+    margin: 20px 0 24px;
+    border: 1px solid;
+    border-radius: 14px;
+}
+
+.freshness-fresh {
+    background: rgba(27, 117, 81, 0.18);
+    border-color: #328b69;
+}
+
+.freshness-aging {
+    background: rgba(170, 119, 35, 0.17);
+    border-color: #b8873e;
+}
+
+.freshness-stale,
+.freshness-future_dated {
+    background: rgba(159, 59, 59, 0.19);
+    border-color: #b45d5d;
+}
+
+.freshness-unknown {
+    background: rgba(91, 111, 131, 0.18);
+    border-color: #617c96;
+}
+
+.freshness-label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.freshness-notice p {
+    max-width: 720px;
+    color: #d4dfe9;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.freshness-meta {
+    display: grid;
+    gap: 5px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.freshness-meta strong {
+    font-size: 15px;
+}
+
+.freshness-meta span {
+    color: #bdcddd;
+    font-size: 12px;
+}
+
+.mandi-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 42px;
+}
+
+.mandi-metric {
+    display: grid;
+    gap: 9px;
+    min-height: 115px;
+    padding: 20px;
+    border: 1px solid #25445e;
+    border-radius: 14px;
+    background: rgba(15, 42, 66, 0.9);
+}
+
+.mandi-metric span {
+    color: #aebfd0;
+    font-size: 13px;
+}
+
+.mandi-metric strong {
+    color: #72dfaa;
+    font-size: 28px;
+}
+
+.mandi-metric small {
+    color: #91a7bb;
+    font-size: 11px;
+}
+
+.dashboard-section {
+    margin-top: 38px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.section-heading h2 {
+    font-size: 23px;
+}
+
+.section-heading>span {
+    color: #9db1c5;
+    font-size: 12px;
+}
+
+.market-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.market-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 190px;
+    padding: 18px;
+    border: 1px solid #25435d;
+    border-radius: 14px;
+    background: rgba(14, 39, 62, 0.92);
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.market-card:hover {
+    transform: translateY(-2px);
+    border-color: #63c99a;
+}
+
+.market-card-selected {
+    border-color: #65d6a0;
+    box-shadow: inset 0 0 0 1px rgba(101, 214, 160, 0.25);
+}
+
+.market-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.market-card-top h3 {
+    font-size: 15px;
+}
+
+.market-card-top span {
+    color: #829bb2;
+    font-size: 11px;
+}
+
+.market-price {
+    margin: 19px 0 7px;
+    color: #78e0ac;
+    font-size: 23px;
+}
+
+.market-card p {
+    color: #bdcddd;
+    font-size: 12px;
+}
+
+.market-card small {
+    margin-top: 7px;
+    color: #8da5bb;
+    font-size: 11px;
+}
+
+.not-reported-tag {
+    align-self: flex-start;
+    margin-top: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(181, 133, 55, 0.2);
+    color: #edc77c;
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.market-select-link {
+    align-self: flex-start;
+    margin-top: auto;
+    padding: 12px 0 0;
+    border: none;
+    background: transparent;
+    color: #72dca8;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.chart-panel {
+    padding: 22px 18px 14px;
+    border: 1px solid #25435d;
+    border-radius: 16px;
+    background: rgba(13, 37, 60, 0.94);
+}
+
+.chart-caption {
+    margin: 12px 4px 0;
+    color: #92a8bd;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px;
+}
+
+.comparison-card {
+    padding: 21px;
+    border: 1px solid #294963;
+    border-radius: 15px;
+    background: rgba(14, 39, 62, 0.94);
+}
+
+.comparison-card-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.comparison-card-heading h3 {
+    margin-bottom: 6px;
+    font-size: 17px;
+}
+
+.comparison-card-heading span {
+    color: #9db1c5;
+    font-size: 11px;
+}
+
+.comparison-highest {
+    margin: 22px 0 5px;
+    color: #7ce1ad;
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.comparison-highest small {
+    display: block;
+    margin-top: 5px;
+    color: #a5b8ca;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.comparison-winner {
+    margin-bottom: 17px;
+    color: #c8d9e7;
+    font-size: 13px;
+}
+
+.comparison-list {
+    border-top: 1px solid #294963;
+}
+
+.comparison-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(54, 79, 103, 0.55);
+    color: #c3d2df;
+    font-size: 13px;
+}
+
+.comparison-row strong {
+    color: #f1f7fb;
+}
+
+.dashboard-caveat {
+    margin-top: 18px;
+    color: #aebfd0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.dashboard-footer {
+    padding-top: 35px;
+    margin-top: 55px;
+    border-top: 1px solid #29445d;
+    color: #829bb2;
+    font-size: 12px;
+    text-align: center;
+}
+
+@media (max-width: 1000px) {
+
+    .mandi-metrics,
+    .market-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .mandi-dashboard {
+        width: 92%;
+        padding-top: 28px;
+    }
+
+    .dashboard-heading,
+    .freshness-notice {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .freshness-meta {
+        text-align: left;
+    }
+
+    .archive-tag {
+        white-space: normal;
+    }
+
+    .dashboard-controls {
+        align-items: stretch;
+    }
+
+    .dashboard-controls label {
+        width: 100%;
+    }
+
+    .dashboard-refresh {
+        width: 100%;
+    }
+
+    .mandi-metrics,
+    .market-grid,
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chart-panel {
+        padding: 14px 8px;
+    }
+}
