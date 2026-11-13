@@ -1,4 +1,4 @@
-"""Read and query CropBalance AI's local Dharashiv mandi archive.
+"""Read and query CropBalance AI's configured mandi observation archive.
 
 Expected location in the project:
     services/local_mandi_service.py
