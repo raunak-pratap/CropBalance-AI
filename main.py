@@ -255,7 +255,7 @@ def get_price_history(
     return df.to_dict(orient="records")
 
 # =========================================================
-# Local Dharashiv Mandi Intelligence
+# Mandi Archive Intelligence
 # =========================================================
 
 def run_local_mandi_query(operation):
@@ -312,7 +312,7 @@ def get_latest_local_mandi_prices(
     district_code: str | None = Query(default=None, description="Internal CropBalance district key"),
 ):
     """
-    Return the latest archeved observation for ezch market.
+    Return the latest archived observation for each market.
     Missing prices remain missing; they are never treated as zero.
     """
     crop = crop.strip().lower()
