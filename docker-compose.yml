@@ -22,6 +22,7 @@ services:
       - ./main.py:/app/main.py:ro
       - ./services/local_mandi_service.py:/app/services/local_mandi_service.py:ro
       - ./services/mandi_archive_service.py:/app/services/mandi_archive_service.py:ro
+      - ./services/mandi_archive_service.py:/app/services/mandi_archive_service.py:ro
       - ./services/reference_registry.py:/app/services/reference_registry.py:ro
       - ./data/reference:/app/data/reference:ro
       - ./data/raw:/app/data/raw:ro
