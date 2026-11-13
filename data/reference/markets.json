@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "registry": "markets",
+  "catalog_scope": "dharashiv_pilot_markets_only",
+  "is_exhaustive": false,
+  "source": [
+    {
+      "name": "AGMARKNET",
+      "url": "https://agmarknet.gov.in/",
+      "role": "market master identifiers used by the existing Dharashiv weekly archive collector",
+      "status": "project_verified"
+    }
+  ],
+  "items": [
+    {
+      "code": "apmc_bhoom",
+      "name": "APMC Bhoom",
+      "aliases": [],
+      "state_code": "maharashtra",
+      "district_code": "dharashiv",
+      "market_type": "apmc",
+      "catalog_status": "pilot_market_data_available"
+    },
+    {
+      "code": "apmc_dharashiv",
+      "name": "APMC Dharashiv",
+      "aliases": [],
+      "state_code": "maharashtra",
+      "district_code": "dharashiv",
+      "market_type": "apmc",
+      "catalog_status": "pilot_market_data_available"
+    },
+    {
+      "code": "apmc_kalamb",
+      "name": "APMC Kalamb",
+      "aliases": [],
+      "state_code": "maharashtra",
+      "district_code": "dharashiv",
+      "market_type": "apmc",
+      "catalog_status": "pilot_market_data_available"
+    },
+    {
+      "code": "apmc_murum",
+      "name": "APMC Murum",
+      "aliases": [],
+      "state_code": "maharashtra",
+      "district_code": "dharashiv",
+      "market_type": "apmc",
+      "catalog_status": "pilot_market_data_available"
+    },
+    {
+      "code": "apmc_paranda",
+      "name": "APMC Paranda",
+      "aliases": [],
+      "state_code": "maharashtra",
+      "district_code": "dharashiv",
+      "market_type": "apmc",
+      "catalog_status": "pilot_market_data_available"
+    },
+    {
+      "code": "apmc_tuljapur",
+      "name": "APMC Tuljapur",
+      "aliases": [],
+      "state_code": "maharashtra",
+      "district_code": "dharashiv",
+      "market_type": "apmc",
+      "catalog_status": "pilot_market_data_available"
+    },
+    {
+      "code": "apmc_umarga",
+      "name": "APMC Umarga",
+      "aliases": [],
+      "state_code": "maharashtra",
+      "district_code": "dharashiv",
+      "market_type": "apmc",
+      "catalog_status": "pilot_market_data_available"
+    },
+    {
+      "code": "apmc_washi",
+      "name": "APMC Washi",
+      "aliases": [],
+      "state_code": "maharashtra",
+      "district_code": "dharashiv",
+      "market_type": "apmc",
+      "catalog_status": "pilot_market_data_available"
+    }
+  ]
+}

@@ -16,7 +16,8 @@ from config import SUPPORTED_CROPS, API_CONFIG, PATH_CONFIG
 from fetcher import MandiPriceFetcher, WeatherFetcher
 from predictor import CropPredictor
 from disease.disease_predictor import DiseasePredictor
-from services.local_mandi_service import LocalMandiService
+from services.mandi_archive_service import MandiArchiveService
+from services.reference_registry import ReferenceRegistry
 
 
 # =========================================================
@@ -39,7 +40,8 @@ app.add_middleware(
 _cache: Dict[str, dict] = {}
 _predictors: Dict[str, CropPredictor] = {}
 _disease_predictor: DiseasePredictor = None
-_local_mandi_service = LocalMandiService()
+_mandi_archive_service = MandiArchiveService()
+_reference_registry = ReferenceRegistry()
 
 
 # =========================================================
@@ -253,7 +255,7 @@ def get_price_history(
     return df.to_dict(orient="records")
 
 # =========================================================
-# Local Dharashiv Mandi Intelligence
+# Mandi Archive Intelligence
 # =========================================================
 
 def run_local_mandi_query(operation):
@@ -272,18 +274,30 @@ def run_local_mandi_query(operation):
 
     except ValueError as exc:
         raise HTTPException(
-            status_code=500,
+            status_code=422,
             detail=str(exc)
         )
 
 
 @app.get("/markets/local", tags=["local_mandi"])
-def get_local_mandi_markets():
+def get_local_mandi_markets(
+    state_code: str | None = Query(
+        default=None,
+        description="CropBalance internal state code, for example maharashtra"
+    ),
+    district_code: str | None = Query(
+        default=None,
+        description="CropBalance internal district code, for example dharashiv"
+    ),
+):
     """
-    Return all markets available in the local Dharashiv mandi service.
+    Return markets in the archive, optionally filtered by registered geography.
     """
     return run_local_mandi_query(
-        lambda: _local_mandi_service.get_markets()
+        lambda: _mandi_archive_service.get_markets(
+            state_code=state_code,
+            district_code=district_code,
+        )
     )
 
 @app.get("/mandi/prices/latest", tags=["local_mandi"])
@@ -292,11 +306,13 @@ def get_latest_local_mandi_prices(
         ...,
         min_length=1,
         max_length=50,
-        description="Crop name, for example soyabean or wheat"
-    )
+        description="Crop name or alias, for example soyabean or wheat"
+    ),
+    state_code: str | None = Query(default=None, description="Internal CropBalance state key"),
+    district_code: str | None = Query(default=None, description="Internal CropBalance district key"),
 ):
     """
-    Return the latest archeved observation for ezch market.
+    Return the latest archived observation for each market.
     Missing prices remain missing; they are never treated as zero.
     """
     crop = crop.strip().lower()
@@ -308,7 +324,9 @@ def get_latest_local_mandi_prices(
         )
 
     return run_local_mandi_query(
-        lambda: _local_mandi_service.get_latest_prices(crop)
+        lambda: _mandi_archive_service.get_latest_prices(
+            crop, state_code=state_code, district_code=district_code
+        )
     )
 
 
@@ -323,8 +341,10 @@ def get_local_mandi_history(
     market_id: str = Query(
         ...,
         min_length=1,
-        description="AGMARKNET market ID, for example 1599 for kalamb"
-    )
+        description="Source market ID, for example 1599 for Kalamb"
+    ),
+    state_code: str | None = Query(default=None, description="Internal CropBalance state key"),
+    district_code: str | None = Query(default=None, description="Internal CropBalance district key"),
 ):
     """
     Return historical observations for a crop in a specific market.
@@ -339,9 +359,11 @@ def get_local_mandi_history(
         )
 
     return run_local_mandi_query(
-        lambda: _local_mandi_service.get_market_history(
+        lambda: _mandi_archive_service.get_market_history(
             crop=crop,
-            market_id=market_id
+            market_id=market_id,
+            state_code=state_code,
+            district_code=district_code,
         )
     )
 
@@ -351,8 +373,10 @@ def compare_local_mandi_prices(
         ...,
         min_length=1,
         max_length=50,
-        description="Crop name, for example soybean"
-    )
+        description="Crop name or alias, for example soybean"
+    ),
+    state_code: str | None = Query(default=None, description="Internal CropBalance state key"),
+    district_code: str | None = Query(default=None, description="Internal CropBalance district key"),
 ):
     """
     Compare reported values across markets only when
@@ -367,7 +391,9 @@ def compare_local_mandi_prices(
         )
 
     return run_local_mandi_query(
-        lambda: _local_mandi_service.compare_markets(crop)
+        lambda: _mandi_archive_service.compare_markets(
+            crop, state_code=state_code, district_code=district_code
+        )
     )
 
 
@@ -482,3 +508,114 @@ def chat(req: ChatRequest):
 
     except Exception as e:
         raise HTTPException(500, str(e))
+
+# =========================================================
+# National Reference Catalog
+# =========================================================
+
+def run_reference_query(operation):
+    """Run a reference-catalog query and translate lookup errors to HTTP 422."""
+    try:
+        return operation()
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@app.get("/catalog/coverage", tags=["reference_catalog"])
+def get_reference_catalog_coverage():
+    """Report catalog counts and, importantly, the current coverage limits."""
+    return _reference_registry.coverage_summary()
+
+
+@app.get("/catalog/crops", tags=["reference_catalog"])
+def get_reference_crops(
+    category: str | None = Query(default=None, max_length=60),
+    q: str | None = Query(default=None, max_length=80),
+    language: str = Query(default="en", pattern="^(en|hi|mr)$"),
+):
+    """List starter crop taxonomy entries; this is not an exhaustive crop list."""
+    items = run_reference_query(
+        lambda: _reference_registry.list_crops(
+            category=category,
+            query=q,
+            language=language,
+        )
+    )
+    return {
+        "status": "ok",
+        "catalog": "crops",
+        "catalog_scope": "national_starter_taxonomy_not_exhaustive",
+        "is_exhaustive": False,
+        "count": len(items),
+        "items": items,
+    }
+
+
+@app.get("/catalog/states", tags=["reference_catalog"])
+def get_reference_states(
+    q: str | None = Query(default=None, max_length=80),
+):
+    """List the seeded 28 state and 8 union-territory names."""
+    items = run_reference_query(
+        lambda: _reference_registry.list_states(query=q)
+    )
+    return {
+        "status": "ok",
+        "catalog": "states",
+        "catalog_scope": "national_state_and_union_territory_name_seed",
+        "is_exhaustive": True,
+        "count": len(items),
+        "items": items,
+        "note": (
+            "Internal CropBalance codes are not LGD codes. Official LGD codes "
+            "must be synchronized separately."
+        ),
+    }
+
+
+@app.get("/catalog/districts", tags=["reference_catalog"])
+def get_reference_districts(
+    state_code: str | None = Query(default=None, max_length=80),
+    q: str | None = Query(default=None, max_length=80),
+    language: str = Query(default="en", pattern="^(en|hi|mr)$"),
+):
+    """List currently seeded districts, optionally filtered by internal state code."""
+    items = run_reference_query(
+        lambda: _reference_registry.list_districts(
+            state_code=state_code,
+            query=q,
+            language=language,
+        )
+    )
+    return {
+        "status": "ok",
+        "catalog": "districts",
+        "catalog_scope": "pilot_district_seed_not_exhaustive",
+        "is_exhaustive": False,
+        "count": len(items),
+        "items": items,
+    }
+
+
+@app.get("/catalog/markets", tags=["reference_catalog"])
+def get_reference_markets(
+    state_code: str | None = Query(default=None, max_length=80),
+    district_code: str | None = Query(default=None, max_length=80),
+    q: str | None = Query(default=None, max_length=80),
+):
+    """List currently seeded markets; seeded market coverage is Dharashiv only."""
+    items = run_reference_query(
+        lambda: _reference_registry.list_markets(
+            state_code=state_code,
+            district_code=district_code,
+            query=q,
+        )
+    )
+    return {
+        "status": "ok",
+        "catalog": "markets",
+        "catalog_scope": "dharashiv_pilot_markets_only",
+        "is_exhaustive": False,
+        "count": len(items),
+        "items": items,
+    }

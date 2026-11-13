@@ -6,6 +6,7 @@ from datetime import date
 import pandas as pd
 
 from services.local_mandi_service import LocalMandiService
+from services.mandi_archive_service import MandiArchiveService
 
 
 class TestLocalMandiService(unittest.TestCase):
@@ -35,9 +36,17 @@ class TestLocalMandiService(unittest.TestCase):
         variety,
         price,
         unit="Rs./Quintal",
+        state="Maharashtra",
+        state_id="20",
+        district="Dharashiv",
+        district_id="347",
     ):
         return {
             "observation_date": date,
+            "state": state,
+            "state_id": str(state_id) if state_id is not None else "",
+            "district": district,
+            "district_id": str(district_id) if district_id is not None else "",
             "market": market,
             "market_id": str(market_id),
             "crop": "soybean",
@@ -158,6 +167,61 @@ class TestLocalMandiService(unittest.TestCase):
 
         self.assertEqual(result["status"], "no_observations")
         self.assertEqual(result["records"], [])
+
+    def test_generic_service_name_is_backward_compatible(self):
+        service = MandiArchiveService(self.archive_path)
+        self.assertIsInstance(service, LocalMandiService)
+
+    def test_queries_filter_by_registered_state_and_district(self):
+        service = self.write_archive([
+            self.make_record(
+                "2026-11-02", "APMC Kalamb", 1599,
+                "Soyabean - Yellow", "7100"
+            ),
+            self.make_record(
+                "2026-11-02", "APMC Mysuru", 9001,
+                "Soyabean - Yellow", "7200",
+                state="Karnataka", state_id="", district="Mysuru",
+                district_id=""
+            ),
+        ])
+
+        result = service.get_latest_prices(
+            "soyabean",
+            state_code="maharashtra",
+            district_code="dharashiv",
+        )
+
+        self.assertEqual(result["district"], "Dharashiv")
+        self.assertEqual(result["state"], "Maharashtra")
+        self.assertEqual(result["record_count"], 1)
+        self.assertEqual(result["records"][0]["market"], "APMC Kalamb")
+
+        karnataka_markets = service.get_markets(state_code="karnataka")
+        self.assertEqual(karnataka_markets["market_count"], 1)
+        self.assertEqual(karnataka_markets["markets"][0]["market"], "APMC Mysuru")
+
+    def test_comparison_never_ranks_markets_across_districts(self):
+        service = self.write_archive([
+            self.make_record(
+                "2026-11-02", "APMC Kalamb", 1599,
+                "Soyabean - Yellow", "7100"
+            ),
+            self.make_record(
+                "2026-11-02", "APMC Mysuru", 9001,
+                "Soyabean - Yellow", "7200",
+                state="Karnataka", state_id="", district="Mysuru",
+                district_id=""
+            ),
+        ])
+
+        result = service.compare_markets("soybean")
+
+        self.assertEqual(result["comparison_count"], 0)
+        self.assertEqual(
+            result["status"],
+            "insufficient_comparable_markets",
+        )
 
     def test_ten_day_old_archive_is_marked_aging(self):
         service = self.write_archive([

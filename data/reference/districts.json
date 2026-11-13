@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "registry": "districts",
+  "catalog_scope": "pilot_district_seed_not_exhaustive",
+  "is_exhaustive": false,
+  "source": [
+    {
+      "name": "AGMARKNET project metadata",
+      "url": "https://agmarknet.gov.in/",
+      "role": "existing project state/district resolver and weekly collector metadata",
+      "status": "project_verified"
+    },
+    {
+      "name": "Local Government Directory",
+      "url": "https://lgdirectory.gov.in/",
+      "role": "authoritative administrative-code synchronization target; LGD district code not yet loaded for this pilot record",
+      "status": "sync_target"
+    }
+  ],
+  "items": [
+    {
+      "code": "dharashiv",
+      "state_code": "maharashtra",
+      "name": "Dharashiv",
+      "aliases": [
+        "Osmanabad"
+      ],
+      "catalog_status": "pilot_market_data_available"
+    }
+  ]
+}

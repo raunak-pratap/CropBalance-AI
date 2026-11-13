@@ -1,0 +1,1002 @@
+{
+  "schema_version": 1,
+  "registry": "crops",
+  "catalog_scope": "national_starter_taxonomy_not_exhaustive",
+  "is_exhaustive": false,
+  "category_note": "Categories are broad product groupings for navigation. Crop calendars, suitability, and growing seasons are region-specific and are intentionally not inferred by this registry.",
+  "source": [
+    {
+      "name": "Ministry of Agriculture and Farmers Welfare — Directorate of Economics and Statistics",
+      "url": "https://desagri.gov.in/",
+      "role": "official crop statistics and classification reference",
+      "status": "reference"
+    },
+    {
+      "name": "AGMARKNET",
+      "url": "https://agmarknet.gov.in/",
+      "role": "source-specific commodity and variety master to be synchronized separately",
+      "status": "source_mapping_target"
+    }
+  ],
+  "items": [
+    {
+      "code": "rice",
+      "names": {
+        "en": "Rice",
+        "hi": "चावल",
+        "mr": "तांदूळ"
+      },
+      "category": "cereals",
+      "aliases": [
+        "paddy",
+        "dhan",
+        "chawal",
+        "धान"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "wheat",
+      "names": {
+        "en": "Wheat",
+        "hi": "गेहूँ",
+        "mr": "गहू"
+      },
+      "category": "cereals",
+      "aliases": [
+        "gehun",
+        "गेहूं"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "maize",
+      "names": {
+        "en": "Maize",
+        "hi": "मक्का",
+        "mr": "मका"
+      },
+      "category": "cereals",
+      "aliases": [
+        "corn",
+        "makka"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "sorghum",
+      "names": {
+        "en": "Sorghum",
+        "hi": "ज्वार",
+        "mr": "ज्वारी"
+      },
+      "category": "cereals",
+      "aliases": [
+        "jowar",
+        "ज्वारी"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "pearl_millet",
+      "names": {
+        "en": "Pearl millet",
+        "hi": "बाजरा",
+        "mr": "बाजरी"
+      },
+      "category": "cereals",
+      "aliases": [
+        "bajra"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "finger_millet",
+      "names": {
+        "en": "Finger millet",
+        "hi": "रागी",
+        "mr": "नाचणी"
+      },
+      "category": "cereals",
+      "aliases": [
+        "ragi",
+        "nachni"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "barley",
+      "names": {
+        "en": "Barley",
+        "hi": "जौ",
+        "mr": "जव"
+      },
+      "category": "cereals",
+      "aliases": [
+        "jau"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "foxtail_millet",
+      "names": {
+        "en": "Foxtail millet",
+        "hi": "कंगनी",
+        "mr": "राळा"
+      },
+      "category": "cereals",
+      "aliases": [
+        "kangni",
+        "navane"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "little_millet",
+      "names": {
+        "en": "Little millet",
+        "hi": "कुटकी",
+        "mr": "सावा"
+      },
+      "category": "cereals",
+      "aliases": [
+        "kutki",
+        "sama"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "kodo_millet",
+      "names": {
+        "en": "Kodo millet",
+        "hi": "कोदो",
+        "mr": "कोद्रा"
+      },
+      "category": "cereals",
+      "aliases": [
+        "kodo"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "proso_millet",
+      "names": {
+        "en": "Proso millet",
+        "hi": "चेना",
+        "mr": "वरी"
+      },
+      "category": "cereals",
+      "aliases": [
+        "cheena"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "barnyard_millet",
+      "names": {
+        "en": "Barnyard millet",
+        "hi": "सांवा",
+        "mr": "भगर"
+      },
+      "category": "cereals",
+      "aliases": [
+        "sanwa",
+        "bhagar"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "chickpea",
+      "names": {
+        "en": "Chickpea",
+        "hi": "चना",
+        "mr": "हरभरा"
+      },
+      "category": "pulses",
+      "aliases": [
+        "gram",
+        "bengal gram",
+        "chana",
+        "kabuli chana"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "pigeon_pea",
+      "names": {
+        "en": "Pigeon pea",
+        "hi": "अरहर",
+        "mr": "तूर"
+      },
+      "category": "pulses",
+      "aliases": [
+        "arhar",
+        "tur",
+        "toor",
+        "red gram"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "green_gram",
+      "names": {
+        "en": "Green gram",
+        "hi": "मूंग",
+        "mr": "मूग"
+      },
+      "category": "pulses",
+      "aliases": [
+        "mung",
+        "moong",
+        "mung bean"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "black_gram",
+      "names": {
+        "en": "Black gram",
+        "hi": "उड़द",
+        "mr": "उडीद"
+      },
+      "category": "pulses",
+      "aliases": [
+        "urad",
+        "urd",
+        "urd bean"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "lentil",
+      "names": {
+        "en": "Lentil",
+        "hi": "मसूर",
+        "mr": "मसूर"
+      },
+      "category": "pulses",
+      "aliases": [
+        "masoor"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "field_pea",
+      "names": {
+        "en": "Field pea",
+        "hi": "मटर",
+        "mr": "वाटाणा"
+      },
+      "category": "pulses",
+      "aliases": [
+        "dry pea"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "cowpea",
+      "names": {
+        "en": "Cowpea",
+        "hi": "लोबिया",
+        "mr": "चवळी"
+      },
+      "category": "pulses",
+      "aliases": [
+        "lobia",
+        "black-eyed pea"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "horse_gram",
+      "names": {
+        "en": "Horse gram",
+        "hi": "कुल्थी",
+        "mr": "कुळीथ"
+      },
+      "category": "pulses",
+      "aliases": [
+        "kulthi",
+        "kulith"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "moth_bean",
+      "names": {
+        "en": "Moth bean",
+        "hi": "मोठ",
+        "mr": "मटकी"
+      },
+      "category": "pulses",
+      "aliases": [
+        "matki",
+        "moth"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "soybean",
+      "names": {
+        "en": "Soybean",
+        "hi": "सोयाबीन",
+        "mr": "सोयाबीन"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "soyabean",
+        "soya bean",
+        "soy"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "groundnut",
+      "names": {
+        "en": "Groundnut",
+        "hi": "मूंगफली",
+        "mr": "भुईमूग"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "peanut",
+        "mungfali"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "rapeseed_mustard",
+      "names": {
+        "en": "Rapeseed and mustard",
+        "hi": "सरसों",
+        "mr": "मोहरी"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "mustard",
+        "rapeseed",
+        "sarson"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "sunflower",
+      "names": {
+        "en": "Sunflower",
+        "hi": "सूरजमुखी",
+        "mr": "सूर्यफूल"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "sunflower seed"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "sesame",
+      "names": {
+        "en": "Sesame",
+        "hi": "तिल",
+        "mr": "तीळ"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "til",
+        "gingelly"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "safflower",
+      "names": {
+        "en": "Safflower",
+        "hi": "कुसुम",
+        "mr": "करडई"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "kusum",
+        "kardi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "castor",
+      "names": {
+        "en": "Castor",
+        "hi": "अरंडी",
+        "mr": "एरंड"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "castor seed",
+        "arandi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "linseed",
+      "names": {
+        "en": "Linseed",
+        "hi": "अलसी",
+        "mr": "जवस"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "flaxseed",
+        "alsi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "niger_seed",
+      "names": {
+        "en": "Niger seed",
+        "hi": "रामतिल",
+        "mr": "कारळे"
+      },
+      "category": "oilseeds",
+      "aliases": [
+        "ramtil",
+        "karale"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "cotton",
+      "names": {
+        "en": "Cotton",
+        "hi": "कपास",
+        "mr": "कापूस"
+      },
+      "category": "fibre_crops",
+      "aliases": [
+        "kapas"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "jute",
+      "names": {
+        "en": "Jute",
+        "hi": "जूट",
+        "mr": "ताग"
+      },
+      "category": "fibre_crops",
+      "aliases": [
+        "patson"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "mesta",
+      "names": {
+        "en": "Mesta",
+        "hi": "मेस्टा",
+        "mr": "मेस्ता"
+      },
+      "category": "fibre_crops",
+      "aliases": [],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "sugarcane",
+      "names": {
+        "en": "Sugarcane",
+        "hi": "गन्ना",
+        "mr": "ऊस"
+      },
+      "category": "sugar_and_starch",
+      "aliases": [
+        "sugar cane",
+        "ganna"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "onion",
+      "names": {
+        "en": "Onion",
+        "hi": "प्याज़",
+        "mr": "कांदा"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "pyaz",
+        "pyaaz"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "tomato",
+      "names": {
+        "en": "Tomato",
+        "hi": "टमाटर",
+        "mr": "टोमॅटो"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "tamatar"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "potato",
+      "names": {
+        "en": "Potato",
+        "hi": "आलू",
+        "mr": "बटाटा"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "aloo"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "brinjal",
+      "names": {
+        "en": "Brinjal",
+        "hi": "बैंगन",
+        "mr": "वांगी"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "eggplant",
+        "aubergine",
+        "baingan"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "okra",
+      "names": {
+        "en": "Okra",
+        "hi": "भिंडी",
+        "mr": "भेंडी"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "ladyfinger",
+        "bhindi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "cabbage",
+      "names": {
+        "en": "Cabbage",
+        "hi": "पत्तागोभी",
+        "mr": "कोबी"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "patta gobhi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "cauliflower",
+      "names": {
+        "en": "Cauliflower",
+        "hi": "फूलगोभी",
+        "mr": "फुलकोबी"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "phool gobhi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "green_chilli",
+      "names": {
+        "en": "Green chilli",
+        "hi": "हरी मिर्च",
+        "mr": "हिरवी मिरची"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "green chili",
+        "hari mirch"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "cucumber",
+      "names": {
+        "en": "Cucumber",
+        "hi": "खीरा",
+        "mr": "काकडी"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "kheera"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "bottle_gourd",
+      "names": {
+        "en": "Bottle gourd",
+        "hi": "लौकी",
+        "mr": "दुधी भोपळा"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "lauki",
+        "dudhi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "bitter_gourd",
+      "names": {
+        "en": "Bitter gourd",
+        "hi": "करेला",
+        "mr": "कारले"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "karela"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "pumpkin",
+      "names": {
+        "en": "Pumpkin",
+        "hi": "कद्दू",
+        "mr": "भोपळा"
+      },
+      "category": "vegetables",
+      "aliases": [
+        "kaddu"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "mango",
+      "names": {
+        "en": "Mango",
+        "hi": "आम",
+        "mr": "आंबा"
+      },
+      "category": "fruits",
+      "aliases": [
+        "aam"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "banana",
+      "names": {
+        "en": "Banana",
+        "hi": "केला",
+        "mr": "केळी"
+      },
+      "category": "fruits",
+      "aliases": [
+        "kela"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "grapes",
+      "names": {
+        "en": "Grapes",
+        "hi": "अंगूर",
+        "mr": "द्राक्षे"
+      },
+      "category": "fruits",
+      "aliases": [
+        "angoor"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "apple",
+      "names": {
+        "en": "Apple",
+        "hi": "सेब",
+        "mr": "सफरचंद"
+      },
+      "category": "fruits",
+      "aliases": [
+        "seb"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "citrus",
+      "names": {
+        "en": "Citrus",
+        "hi": "खट्टे फल",
+        "mr": "आंबटवर्गीय फळे"
+      },
+      "category": "fruits",
+      "aliases": [
+        "orange",
+        "lemon",
+        "mosambi",
+        "sweet lime"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "guava",
+      "names": {
+        "en": "Guava",
+        "hi": "अमरूद",
+        "mr": "पेरू"
+      },
+      "category": "fruits",
+      "aliases": [
+        "amrood",
+        "peru"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "papaya",
+      "names": {
+        "en": "Papaya",
+        "hi": "पपीता",
+        "mr": "पपई"
+      },
+      "category": "fruits",
+      "aliases": [
+        "papita"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "pomegranate",
+      "names": {
+        "en": "Pomegranate",
+        "hi": "अनार",
+        "mr": "डाळिंब"
+      },
+      "category": "fruits",
+      "aliases": [
+        "anar"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "litchi",
+      "names": {
+        "en": "Litchi",
+        "hi": "लीची",
+        "mr": "लिची"
+      },
+      "category": "fruits",
+      "aliases": [
+        "lychee"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "pineapple",
+      "names": {
+        "en": "Pineapple",
+        "hi": "अनानास",
+        "mr": "अननस"
+      },
+      "category": "fruits",
+      "aliases": [
+        "ananas"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "jackfruit",
+      "names": {
+        "en": "Jackfruit",
+        "hi": "कटहल",
+        "mr": "फणस"
+      },
+      "category": "fruits",
+      "aliases": [
+        "kathal",
+        "phanas"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "coconut",
+      "names": {
+        "en": "Coconut",
+        "hi": "नारियल",
+        "mr": "नारळ"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "nariyal"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "turmeric",
+      "names": {
+        "en": "Turmeric",
+        "hi": "हल्दी",
+        "mr": "हळद"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "haldi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "ginger",
+      "names": {
+        "en": "Ginger",
+        "hi": "अदरक",
+        "mr": "आले"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "adrak"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "garlic",
+      "names": {
+        "en": "Garlic",
+        "hi": "लहसुन",
+        "mr": "लसूण"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "lahsun"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "cumin",
+      "names": {
+        "en": "Cumin",
+        "hi": "जीरा",
+        "mr": "जिरे"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "jeera"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "coriander",
+      "names": {
+        "en": "Coriander",
+        "hi": "धनिया",
+        "mr": "धणे"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "dhania"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "dry_chilli",
+      "names": {
+        "en": "Dry chilli",
+        "hi": "सूखी मिर्च",
+        "mr": "सुक्या मिरच्या"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "red chilli",
+        "red chili"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "black_pepper",
+      "names": {
+        "en": "Black pepper",
+        "hi": "काली मिर्च",
+        "mr": "काळी मिरी"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "pepper"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "cardamom",
+      "names": {
+        "en": "Cardamom",
+        "hi": "इलायची",
+        "mr": "वेलची"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "elaichi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "fenugreek",
+      "names": {
+        "en": "Fenugreek",
+        "hi": "मेथी",
+        "mr": "मेथी"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "methi"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "tea",
+      "names": {
+        "en": "Tea",
+        "hi": "चाय",
+        "mr": "चहा"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "tea leaf"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "coffee",
+      "names": {
+        "en": "Coffee",
+        "hi": "कॉफी",
+        "mr": "कॉफी"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "arecanut",
+      "names": {
+        "en": "Arecanut",
+        "hi": "सुपारी",
+        "mr": "सुपारी"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "betel nut",
+        "supari"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "cashew",
+      "names": {
+        "en": "Cashew",
+        "hi": "काजू",
+        "mr": "काजू"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "cashew nut"
+      ],
+      "catalog_status": "starter_taxonomy"
+    },
+    {
+      "code": "rubber",
+      "names": {
+        "en": "Natural rubber",
+        "hi": "प्राकृतिक रबर",
+        "mr": "नैसर्गिक रबर"
+      },
+      "category": "plantation_and_spices",
+      "aliases": [
+        "rubber"
+      ],
+      "catalog_status": "starter_taxonomy"
+    }
+  ]
+}

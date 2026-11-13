@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "registry": "states",
+  "country": "India",
+  "catalog_scope": "national_state_and_union_territory_name_seed",
+  "is_exhaustive": true,
+  "identifier_note": "The code field is a CropBalance internal stable key, not an LGD, Census, ISO, or AGMARKNET code. External government/source identifiers belong in source_mappings.json.",
+  "source": [
+    {
+      "name": "Ministry of Panchayati Raj — Local Government Directory",
+      "url": "https://lgdirectory.gov.in/",
+      "role": "authoritative source for maintained administrative hierarchy and LGD codes",
+      "status": "authoritative_sync_target"
+    },
+    {
+      "name": "Open Government Data Platform — LGD catalog",
+      "url": "https://data.gov.in/catalog/local-government-directory-lgd",
+      "role": "LGD directory dataset catalog",
+      "status": "reference"
+    }
+  ],
+  "items": [
+    {
+      "code": "andhra_pradesh",
+      "name": "Andhra Pradesh",
+      "administrative_type": "state",
+      "aliases": [
+        "AP"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "arunachal_pradesh",
+      "name": "Arunachal Pradesh",
+      "administrative_type": "state",
+      "aliases": [
+        "Arunachal"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "assam",
+      "name": "Assam",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "bihar",
+      "name": "Bihar",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "chhattisgarh",
+      "name": "Chhattisgarh",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "goa",
+      "name": "Goa",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "gujarat",
+      "name": "Gujarat",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "haryana",
+      "name": "Haryana",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "himachal_pradesh",
+      "name": "Himachal Pradesh",
+      "administrative_type": "state",
+      "aliases": [
+        "HP"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "jharkhand",
+      "name": "Jharkhand",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "karnataka",
+      "name": "Karnataka",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "kerala",
+      "name": "Kerala",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "madhya_pradesh",
+      "name": "Madhya Pradesh",
+      "administrative_type": "state",
+      "aliases": [
+        "MP"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "maharashtra",
+      "name": "Maharashtra",
+      "administrative_type": "state",
+      "aliases": [
+        "MH"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "manipur",
+      "name": "Manipur",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "meghalaya",
+      "name": "Meghalaya",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "mizoram",
+      "name": "Mizoram",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "nagaland",
+      "name": "Nagaland",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "odisha",
+      "name": "Odisha",
+      "administrative_type": "state",
+      "aliases": [
+        "Orissa"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "punjab",
+      "name": "Punjab",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "rajasthan",
+      "name": "Rajasthan",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "sikkim",
+      "name": "Sikkim",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "tamil_nadu",
+      "name": "Tamil Nadu",
+      "administrative_type": "state",
+      "aliases": [
+        "Tamilnadu"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "telangana",
+      "name": "Telangana",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "tripura",
+      "name": "Tripura",
+      "administrative_type": "state",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "uttar_pradesh",
+      "name": "Uttar Pradesh",
+      "administrative_type": "state",
+      "aliases": [
+        "UP"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "uttarakhand",
+      "name": "Uttarakhand",
+      "administrative_type": "state",
+      "aliases": [
+        "Uttaranchal"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "west_bengal",
+      "name": "West Bengal",
+      "administrative_type": "state",
+      "aliases": [
+        "Bengal"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "andaman_nicobar_islands",
+      "name": "Andaman and Nicobar Islands",
+      "administrative_type": "union_territory",
+      "aliases": [
+        "Andaman & Nicobar Islands",
+        "A&N Islands"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "chandigarh",
+      "name": "Chandigarh",
+      "administrative_type": "union_territory",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "dadra_nagar_haveli_daman_diu",
+      "name": "Dadra and Nagar Haveli and Daman and Diu",
+      "administrative_type": "union_territory",
+      "aliases": [
+        "Dadra & Nagar Haveli and Daman & Diu",
+        "Dadra and Nagar Haveli",
+        "Daman and Diu",
+        "DNHDD"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "delhi",
+      "name": "Delhi",
+      "administrative_type": "union_territory",
+      "aliases": [
+        "National Capital Territory of Delhi",
+        "NCT Delhi"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "jammu_kashmir",
+      "name": "Jammu and Kashmir",
+      "administrative_type": "union_territory",
+      "aliases": [
+        "Jammu & Kashmir",
+        "J&K"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "ladakh",
+      "name": "Ladakh",
+      "administrative_type": "union_territory",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "lakshadweep",
+      "name": "Lakshadweep",
+      "administrative_type": "union_territory",
+      "aliases": [],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    },
+    {
+      "code": "puducherry",
+      "name": "Puducherry",
+      "administrative_type": "union_territory",
+      "aliases": [
+        "Pondicherry"
+      ],
+      "source_codes": {},
+      "catalog_status": "name_seed_only"
+    }
+  ]
+}
