@@ -25,10 +25,7 @@
       "aliases": [
         "Osmanabad"
       ],
-      "catalog_status": "pilot_market_data_available",
-      "source_mappings": [
-        "agmarknet:district:347"
-      ]
+      "catalog_status": "pilot_market_data_available"
     }
   ]
 }
