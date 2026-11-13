@@ -139,11 +139,12 @@ def _format_number(value: float | None) -> int | float | None:
     return float(value)
 
 
-class LocalMandiService:
-    """Query the local Dharashiv archive without treating it as live market data.
+class MandiArchiveService:
+    """Query archived mandi observations by crop and registered geography.
 
-    The CSV is loaded for each method call. This keeps results fresh after the
-    weekly collector updates the archive and avoids holding a stale DataFrame.
+    The default archive remains the Dharashiv pilot for backward compatibility.
+    A different canonical observation archive can be supplied with archive_path.
+    The CSV is loaded for each method call so refreshed archives are not cached.
     """
 
     def __init__(
@@ -768,3 +769,7 @@ class LocalMandiService:
                 "fees, and the actual transaction price also matter."
             ),
         }
+
+
+# Backward-compatible name used by the Dharashiv pilot and existing agent code.
+LocalMandiService = MandiArchiveService
