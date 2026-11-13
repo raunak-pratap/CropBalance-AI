@@ -33,8 +33,7 @@
         "chawal",
         "धान"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "wheat",
@@ -48,8 +47,7 @@
         "gehun",
         "गेहूं"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "maize",
@@ -63,8 +61,7 @@
         "corn",
         "makka"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "sorghum",
@@ -78,8 +75,7 @@
         "jowar",
         "ज्वारी"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "pearl_millet",
@@ -92,8 +88,7 @@
       "aliases": [
         "bajra"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "finger_millet",
@@ -107,8 +102,7 @@
         "ragi",
         "nachni"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "barley",
@@ -121,8 +115,7 @@
       "aliases": [
         "jau"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "foxtail_millet",
@@ -136,8 +129,7 @@
         "kangni",
         "navane"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "little_millet",
@@ -151,8 +143,7 @@
         "kutki",
         "sama"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "kodo_millet",
@@ -165,8 +156,7 @@
       "aliases": [
         "kodo"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "proso_millet",
@@ -179,8 +169,7 @@
       "aliases": [
         "cheena"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "barnyard_millet",
@@ -194,8 +183,7 @@
         "sanwa",
         "bhagar"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "chickpea",
@@ -211,8 +199,7 @@
         "chana",
         "kabuli chana"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "pigeon_pea",
@@ -228,8 +215,7 @@
         "toor",
         "red gram"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "green_gram",
@@ -244,8 +230,7 @@
         "moong",
         "mung bean"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "black_gram",
@@ -260,8 +245,7 @@
         "urd",
         "urd bean"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "lentil",
@@ -274,8 +258,7 @@
       "aliases": [
         "masoor"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "field_pea",
@@ -288,8 +271,7 @@
       "aliases": [
         "dry pea"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "cowpea",
@@ -303,8 +285,7 @@
         "lobia",
         "black-eyed pea"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "horse_gram",
@@ -318,8 +299,7 @@
         "kulthi",
         "kulith"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "moth_bean",
@@ -333,8 +313,7 @@
         "matki",
         "moth"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "soybean",
@@ -349,8 +328,7 @@
         "soya bean",
         "soy"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "groundnut",
@@ -364,8 +342,7 @@
         "peanut",
         "mungfali"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "rapeseed_mustard",
@@ -380,8 +357,7 @@
         "rapeseed",
         "sarson"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "sunflower",
@@ -394,8 +370,7 @@
       "aliases": [
         "sunflower seed"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "sesame",
@@ -409,8 +384,7 @@
         "til",
         "gingelly"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "safflower",
@@ -424,8 +398,7 @@
         "kusum",
         "kardi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "castor",
@@ -439,8 +412,7 @@
         "castor seed",
         "arandi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "linseed",
@@ -454,8 +426,7 @@
         "flaxseed",
         "alsi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "niger_seed",
@@ -469,8 +440,7 @@
         "ramtil",
         "karale"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "cotton",
@@ -483,8 +453,7 @@
       "aliases": [
         "kapas"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "jute",
@@ -495,10 +464,9 @@
       },
       "category": "fibre_crops",
       "aliases": [
-        "patसन"
+        "patson"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "mesta",
@@ -509,8 +477,7 @@
       },
       "category": "fibre_crops",
       "aliases": [],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "sugarcane",
@@ -524,8 +491,7 @@
         "sugar cane",
         "ganna"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "onion",
@@ -539,8 +505,7 @@
         "pyaz",
         "pyaaz"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "tomato",
@@ -553,8 +518,7 @@
       "aliases": [
         "tamatar"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "potato",
@@ -567,8 +531,7 @@
       "aliases": [
         "aloo"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "brinjal",
@@ -583,8 +546,7 @@
         "aubergine",
         "baingan"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "okra",
@@ -598,8 +560,7 @@
         "ladyfinger",
         "bhindi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "cabbage",
@@ -612,8 +573,7 @@
       "aliases": [
         "patta gobhi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "cauliflower",
@@ -626,8 +586,7 @@
       "aliases": [
         "phool gobhi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "green_chilli",
@@ -641,8 +600,7 @@
         "green chili",
         "hari mirch"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "cucumber",
@@ -655,8 +613,7 @@
       "aliases": [
         "kheera"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "bottle_gourd",
@@ -670,8 +627,7 @@
         "lauki",
         "dudhi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "bitter_gourd",
@@ -684,8 +640,7 @@
       "aliases": [
         "karela"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "pumpkin",
@@ -698,8 +653,7 @@
       "aliases": [
         "kaddu"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "mango",
@@ -712,8 +666,7 @@
       "aliases": [
         "aam"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "banana",
@@ -726,8 +679,7 @@
       "aliases": [
         "kela"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "grapes",
@@ -740,8 +692,7 @@
       "aliases": [
         "angoor"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "apple",
@@ -754,8 +705,7 @@
       "aliases": [
         "seb"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "citrus",
@@ -771,8 +721,7 @@
         "mosambi",
         "sweet lime"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "guava",
@@ -786,8 +735,7 @@
         "amrood",
         "peru"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "papaya",
@@ -800,8 +748,7 @@
       "aliases": [
         "papita"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "pomegranate",
@@ -814,8 +761,7 @@
       "aliases": [
         "anar"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "litchi",
@@ -828,8 +774,7 @@
       "aliases": [
         "lychee"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "pineapple",
@@ -842,8 +787,7 @@
       "aliases": [
         "ananas"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "jackfruit",
@@ -857,8 +801,7 @@
         "kathal",
         "phanas"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "coconut",
@@ -871,8 +814,7 @@
       "aliases": [
         "nariyal"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "turmeric",
@@ -885,8 +827,7 @@
       "aliases": [
         "haldi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "ginger",
@@ -899,8 +840,7 @@
       "aliases": [
         "adrak"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "garlic",
@@ -913,8 +853,7 @@
       "aliases": [
         "lahsun"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "cumin",
@@ -927,8 +866,7 @@
       "aliases": [
         "jeera"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "coriander",
@@ -941,8 +879,7 @@
       "aliases": [
         "dhania"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "dry_chilli",
@@ -956,8 +893,7 @@
         "red chilli",
         "red chili"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "black_pepper",
@@ -970,8 +906,7 @@
       "aliases": [
         "pepper"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "cardamom",
@@ -984,8 +919,7 @@
       "aliases": [
         "elaichi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "fenugreek",
@@ -998,8 +932,7 @@
       "aliases": [
         "methi"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "tea",
@@ -1012,8 +945,7 @@
       "aliases": [
         "tea leaf"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "coffee",
@@ -1024,8 +956,7 @@
       },
       "category": "plantation_and_spices",
       "aliases": [],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "arecanut",
@@ -1039,8 +970,7 @@
         "betel nut",
         "supari"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "cashew",
@@ -1053,8 +983,7 @@
       "aliases": [
         "cashew nut"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     },
     {
       "code": "rubber",
@@ -1067,8 +996,7 @@
       "aliases": [
         "rubber"
       ],
-      "catalog_status": "starter_taxonomy",
-      "source_mappings": []
+      "catalog_status": "starter_taxonomy"
     }
   ]
 }
