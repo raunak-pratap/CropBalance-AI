@@ -18,6 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 import math
+import os
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 import pandas as pd
@@ -152,7 +153,12 @@ class MandiArchiveService:
         archive_path: str | Path | None = None,
         reference_registry: ReferenceRegistry | None = None,
     ) -> None:
-        self.archive_path = Path(archive_path) if archive_path else DEFAULT_ARCHIVE_PATH
+        configured_path = (
+            archive_path
+            or os.getenv("CROPBALANCE_MANDI_ARCHIVE")
+            or DEFAULT_ARCHIVE_PATH
+        )
+        self.archive_path = Path(configured_path)
         self.reference_registry = reference_registry or ReferenceRegistry()
 
     def _load_archive(self) -> pd.DataFrame:
