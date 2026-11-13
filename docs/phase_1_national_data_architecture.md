@@ -45,6 +45,8 @@ The Dharashiv district ID above is the ID used by the existing AGMARKNET project
 ## Code
 
 - `services/reference_registry.py`: loads and validates reference data, resolves canonical codes and aliases, lists entities, exposes namespaced external IDs and reports coverage.
+- `services/mandi_archive_service.py`: public generic archive-query import. `MandiArchiveService` supports optional `state_code` and `district_code` filters; `LocalMandiService` remains as a backward-compatible alias for the Dharashiv pilot.
+- `CROPBALANCE_MANDI_ARCHIVE`: optional environment variable to point the generic service at another canonical observation CSV. If unset, it continues to use the Dharashiv pilot archive.
 - `data/reference/crops.json`: crop taxonomy and English/Hindi/Marathi display names for the starter set.
 - `data/reference/states.json`: Indian state and UT name seed.
 - `data/reference/districts.json`: seeded district entries.
@@ -63,7 +65,7 @@ The registry validates unique internal keys, district-to-state links, market-to-
 
 The `state_code` and `district_code` query parameters use CropBalance internal keys, not official government codes.
 
-The existing Dharashiv endpoints remain available for backward compatibility. The catalog endpoints are the first general discovery layer; national price ingestion and a location-filtered production observation store are subsequent data-engineering work.
+The existing `/markets/local` and `/mandi/prices/*` endpoints remain available for backward compatibility. They now accept optional `state_code` and `district_code` filters using CropBalance internal keys; they can resolve registered names and aliases too. The catalog endpoints are the first general discovery layer. National ingestion, LGD synchronization and a maintained all-India observation archive are subsequent data-engineering work.
 
 ## Data-source policy and next synchronization work
 
