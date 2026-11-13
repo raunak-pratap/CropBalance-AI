@@ -280,12 +280,24 @@ def run_local_mandi_query(operation):
 
 
 @app.get("/markets/local", tags=["local_mandi"])
-def get_local_mandi_markets():
+def get_local_mandi_markets(
+    state_code: str | None = Query(
+        default=None,
+        description="CropBalance internal state code, for example maharashtra"
+    ),
+    district_code: str | None = Query(
+        default=None,
+        description="CropBalance internal district code, for example dharashiv"
+    ),
+):
     """
-    Return all markets available in the local Dharashiv mandi service.
+    Return markets in the archive, optionally filtered by registered geography.
     """
     return run_local_mandi_query(
-        lambda: _local_mandi_service.get_markets()
+        lambda: _local_mandi_service.get_markets(
+            state_code=state_code,
+            district_code=district_code,
+        )
     )
 
 @app.get("/mandi/prices/latest", tags=["local_mandi"])
@@ -294,8 +306,10 @@ def get_latest_local_mandi_prices(
         ...,
         min_length=1,
         max_length=50,
-        description="Crop name, for example soyabean or wheat"
-    )
+        description="Crop name or alias, for example soyabean or wheat"
+    ),
+    state_code: str | None = Query(default=None, description="Internal CropBalance state key"),
+    district_code: str | None = Query(default=None, description="Internal CropBalance district key"),
 ):
     """
     Return the latest archeved observation for ezch market.
@@ -310,7 +324,9 @@ def get_latest_local_mandi_prices(
         )
 
     return run_local_mandi_query(
-        lambda: _local_mandi_service.get_latest_prices(crop)
+        lambda: _local_mandi_service.get_latest_prices(
+            crop, state_code=state_code, district_code=district_code
+        )
     )
 
 
@@ -325,8 +341,10 @@ def get_local_mandi_history(
     market_id: str = Query(
         ...,
         min_length=1,
-        description="AGMARKNET market ID, for example 1599 for kalamb"
-    )
+        description="Source market ID, for example 1599 for Kalamb"
+    ),
+    state_code: str | None = Query(default=None, description="Internal CropBalance state key"),
+    district_code: str | None = Query(default=None, description="Internal CropBalance district key"),
 ):
     """
     Return historical observations for a crop in a specific market.
@@ -343,7 +361,9 @@ def get_local_mandi_history(
     return run_local_mandi_query(
         lambda: _local_mandi_service.get_market_history(
             crop=crop,
-            market_id=market_id
+            market_id=market_id,
+            state_code=state_code,
+            district_code=district_code,
         )
     )
 
@@ -353,8 +373,10 @@ def compare_local_mandi_prices(
         ...,
         min_length=1,
         max_length=50,
-        description="Crop name, for example soybean"
-    )
+        description="Crop name or alias, for example soybean"
+    ),
+    state_code: str | None = Query(default=None, description="Internal CropBalance state key"),
+    district_code: str | None = Query(default=None, description="Internal CropBalance district key"),
 ):
     """
     Compare reported values across markets only when
@@ -369,7 +391,9 @@ def compare_local_mandi_prices(
         )
 
     return run_local_mandi_query(
-        lambda: _local_mandi_service.compare_markets(crop)
+        lambda: _local_mandi_service.compare_markets(
+            crop, state_code=state_code, district_code=district_code
+        )
     )
 
 
