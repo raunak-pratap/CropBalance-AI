@@ -17,6 +17,7 @@ from fetcher import MandiPriceFetcher, WeatherFetcher
 from predictor import CropPredictor
 from disease.disease_predictor import DiseasePredictor
 from services.local_mandi_service import LocalMandiService
+from services.reference_registry import ReferenceRegistry
 
 
 # =========================================================
@@ -40,6 +41,7 @@ _cache: Dict[str, dict] = {}
 _predictors: Dict[str, CropPredictor] = {}
 _disease_predictor: DiseasePredictor = None
 _local_mandi_service = LocalMandiService()
+_reference_registry = ReferenceRegistry()
 
 
 # =========================================================
@@ -482,3 +484,114 @@ def chat(req: ChatRequest):
 
     except Exception as e:
         raise HTTPException(500, str(e))
+
+# =========================================================
+# National Reference Catalog
+# =========================================================
+
+def run_reference_query(operation):
+    """Run a reference-catalog query and translate lookup errors to HTTP 422."""
+    try:
+        return operation()
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@app.get("/catalog/coverage", tags=["reference_catalog"])
+def get_reference_catalog_coverage():
+    """Report catalog counts and, importantly, the current coverage limits."""
+    return _reference_registry.coverage_summary()
+
+
+@app.get("/catalog/crops", tags=["reference_catalog"])
+def get_reference_crops(
+    category: str | None = Query(default=None, max_length=60),
+    q: str | None = Query(default=None, max_length=80),
+    language: str = Query(default="en", pattern="^(en|hi|mr)$"),
+):
+    """List starter crop taxonomy entries; this is not an exhaustive crop list."""
+    items = run_reference_query(
+        lambda: _reference_registry.list_crops(
+            category=category,
+            query=q,
+            language=language,
+        )
+    )
+    return {
+        "status": "ok",
+        "catalog": "crops",
+        "catalog_scope": "national_starter_taxonomy_not_exhaustive",
+        "is_exhaustive": False,
+        "count": len(items),
+        "items": items,
+    }
+
+
+@app.get("/catalog/states", tags=["reference_catalog"])
+def get_reference_states(
+    q: str | None = Query(default=None, max_length=80),
+):
+    """List the seeded 28 state and 8 union-territory names."""
+    items = run_reference_query(
+        lambda: _reference_registry.list_states(query=q)
+    )
+    return {
+        "status": "ok",
+        "catalog": "states",
+        "catalog_scope": "national_state_and_union_territory_name_seed",
+        "is_exhaustive": True,
+        "count": len(items),
+        "items": items,
+        "note": (
+            "Internal CropBalance codes are not LGD codes. Official LGD codes "
+            "must be synchronized separately."
+        ),
+    }
+
+
+@app.get("/catalog/districts", tags=["reference_catalog"])
+def get_reference_districts(
+    state_code: str | None = Query(default=None, max_length=80),
+    q: str | None = Query(default=None, max_length=80),
+    language: str = Query(default="en", pattern="^(en|hi|mr)$"),
+):
+    """List currently seeded districts, optionally filtered by internal state code."""
+    items = run_reference_query(
+        lambda: _reference_registry.list_districts(
+            state_code=state_code,
+            query=q,
+            language=language,
+        )
+    )
+    return {
+        "status": "ok",
+        "catalog": "districts",
+        "catalog_scope": "pilot_district_seed_not_exhaustive",
+        "is_exhaustive": False,
+        "count": len(items),
+        "items": items,
+    }
+
+
+@app.get("/catalog/markets", tags=["reference_catalog"])
+def get_reference_markets(
+    state_code: str | None = Query(default=None, max_length=80),
+    district_code: str | None = Query(default=None, max_length=80),
+    q: str | None = Query(default=None, max_length=80),
+):
+    """List currently seeded markets; seeded market coverage is Dharashiv only."""
+    items = run_reference_query(
+        lambda: _reference_registry.list_markets(
+            state_code=state_code,
+            district_code=district_code,
+            query=q,
+        )
+    )
+    return {
+        "status": "ok",
+        "catalog": "markets",
+        "catalog_scope": "dharashiv_pilot_markets_only",
+        "is_exhaustive": False,
+        "count": len(items),
+        "items": items,
+    }
