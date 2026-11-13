@@ -1,0 +1,45 @@
+name: National reference registry tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "data/reference/**"
+      - "services/reference_registry.py"
+      - "services/local_mandi_service.py"
+      - "services/mandi_archive_service.py"
+      - "tests/test_reference_registry.py"
+      - "tests/test_local_mandi_service.py"
+      - ".github/workflows/reference-registry-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "data/reference/**"
+      - "services/reference_registry.py"
+      - "services/local_mandi_service.py"
+      - "services/mandi_archive_service.py"
+      - "tests/test_reference_registry.py"
+      - "tests/test_local_mandi_service.py"
+      - ".github/workflows/reference-registry-tests.yml"
+
+jobs:
+  reference-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install focused test dependencies
+        run: python -m pip install --upgrade pip pytest pandas
+
+      - name: Test reference registries and generic mandi archive service
+        run: |
+          python -m pytest -q \
+            tests/test_reference_registry.py \
+            tests/test_local_mandi_service.py
