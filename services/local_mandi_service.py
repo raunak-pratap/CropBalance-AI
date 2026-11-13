@@ -22,6 +22,8 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 import pandas as pd
 
+from services.reference_registry import ReferenceRegistry
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARCHIVE_PATH = (
@@ -144,8 +146,13 @@ class LocalMandiService:
     weekly collector updates the archive and avoids holding a stale DataFrame.
     """
 
-    def __init__(self, archive_path: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        archive_path: str | Path | None = None,
+        reference_registry: ReferenceRegistry | None = None,
+    ) -> None:
         self.archive_path = Path(archive_path) if archive_path else DEFAULT_ARCHIVE_PATH
+        self.reference_registry = reference_registry or ReferenceRegistry()
 
     def _load_archive(self) -> pd.DataFrame:
         """Read the CSV and add normalised helper columns used by the methods."""
@@ -196,9 +203,28 @@ class LocalMandiService:
             axis=1,
         )
         frame["_market_id_key"] = frame["market_id"].map(_normalise_id)
+        frame["_state_key"] = frame["state"].map(
+            lambda value: _clean_text(value).casefold()
+        )
+        frame["_district_key"] = frame["district"].map(
+            lambda value: _clean_text(value).casefold()
+        )
+        frame["_state_id_key"] = frame["state_id"].map(_normalise_id)
+        frame["_district_id_key"] = frame["district_id"].map(_normalise_id)
+        frame["_source_key"] = frame["data_source"].map(
+            lambda value: _clean_text(value).casefold()
+        )
         frame["_market_key"] = frame.apply(
-            lambda row: _normalise_id(row.get("market_id"))
-            or _clean_text(row.get("market")).casefold(),
+            lambda row: "|".join(
+                part
+                for part in (
+                    _clean_text(row.get("data_source")).casefold(),
+                    _normalise_id(row.get("state_id")) or _clean_text(row.get("state")).casefold(),
+                    _normalise_id(row.get("district_id")) or _clean_text(row.get("district")).casefold(),
+                    _normalise_id(row.get("market_id")) or _clean_text(row.get("market")).casefold(),
+                )
+                if part
+            ),
             axis=1,
         )
         # Keep variety labels distinct. In particular, do not merge "Unknown"
@@ -220,12 +246,115 @@ class LocalMandiService:
         )
         return frame
 
-    @staticmethod
-    def _matches_crop(frame: pd.DataFrame, crop: str) -> pd.DataFrame:
+    def _matches_crop(self, frame: pd.DataFrame, crop: str) -> pd.DataFrame:
         crop_key = _clean_text(crop).casefold()
         if not crop_key:
             raise ValueError("crop must be a non-empty crop name, such as 'wheat'.")
-        return frame.loc[frame["_crop_key"] == crop_key].copy()
+
+        try:
+            crop_item = self.reference_registry.resolve("crops", crop)
+            crop_keys = {
+                crop_item["code"].casefold(),
+                *[
+                    _clean_text(value).casefold()
+                    for value in crop_item.get("names", {}).values()
+                    if _clean_text(value)
+                ],
+                *[
+                    _clean_text(value).casefold()
+                    for value in crop_item.get("aliases", [])
+                    if _clean_text(value)
+                ],
+            }
+        except ValueError:
+            crop_keys = {crop_key}
+
+        return frame.loc[frame["_crop_key"].isin(crop_keys)].copy()
+
+    def _filter_geography(
+        self,
+        frame: pd.DataFrame,
+        state_code: str | None = None,
+        district_code: str | None = None,
+    ) -> pd.DataFrame:
+        """Filter rows using internal registry codes, names or provider IDs."""
+        state_item = (
+            self.reference_registry.resolve("states", state_code)
+            if state_code else None
+        )
+        district_item = (
+            self.reference_registry.resolve("districts", district_code)
+            if district_code else None
+        )
+
+        if district_item:
+            parent_state = district_item["state_code"]
+            if state_item and state_item["code"] != parent_state:
+                raise ValueError(
+                    f"District {district_item['name']} does not belong to "
+                    f"state {state_item['name']}."
+                )
+            if not state_item:
+                state_item = self.reference_registry.resolve("states", parent_state)
+
+        result = frame
+        if state_item:
+            state_labels = {
+                _clean_text(state_item["name"]).casefold(),
+                *[
+                    _clean_text(alias).casefold()
+                    for alias in state_item.get("aliases", [])
+                ],
+            }
+            state_mask = result["_state_key"].isin(state_labels)
+            source_id = self.reference_registry.external_id_for(
+                "state", state_item["code"], "agmarknet"
+            )
+            if source_id:
+                state_mask = state_mask | (
+                    result["_state_id_key"].eq(source_id)
+                    & result["_source_key"].eq("agmarknet")
+                )
+            result = result.loc[state_mask].copy()
+
+        if district_item:
+            district_labels = {
+                _clean_text(district_item["name"]).casefold(),
+                *[
+                    _clean_text(alias).casefold()
+                    for alias in district_item.get("aliases", [])
+                ],
+            }
+            district_mask = result["_district_key"].isin(district_labels)
+            source_id = self.reference_registry.external_id_for(
+                "district", district_item["code"], "agmarknet"
+            )
+            if source_id:
+                district_mask = district_mask | (
+                    result["_district_id_key"].eq(source_id)
+                    & result["_source_key"].eq("agmarknet")
+                )
+            result = result.loc[district_mask].copy()
+
+        return result
+
+    @staticmethod
+    def _location_metadata(frame: pd.DataFrame) -> dict[str, str | None]:
+        """Return a location only if all rows refer to one state/district."""
+        states = sorted({
+            _clean_text(value)
+            for value in frame.get("state", pd.Series(dtype=str)).tolist()
+            if _clean_text(value)
+        })
+        districts = sorted({
+            _clean_text(value)
+            for value in frame.get("district", pd.Series(dtype=str)).tolist()
+            if _clean_text(value)
+        })
+        return {
+            "state": states[0] if len(states) == 1 else None,
+            "district": districts[0] if len(districts) == 1 else None,
+        }
 
     @staticmethod
     def _serialise_record(row: pd.Series) -> dict[str, Any]:
@@ -246,7 +375,7 @@ class LocalMandiService:
             "observation_date": observation_date,
             "state": _clean_text(row.get("state")) or None,
             "state_id": _normalise_id(row.get("state_id")) or None,
-            "district": _clean_text(row.get("district")) or "Dharashiv",
+            "district": _clean_text(row.get("district")) or None,
             "district_id": _normalise_id(row.get("district_id")) or None,
             "market": _clean_text(row.get("market")) or None,
             "market_id": _normalise_id(row.get("market_id")) or None,
@@ -351,16 +480,23 @@ class LocalMandiService:
             "freshness_status": status,
         }
 
-    def get_markets(self) -> dict[str, Any]:
-        """Return the markets represented in the archive and their date coverage."""
-        frame = self._load_archive()
+    def get_markets(
+        self,
+        state_code: str | None = None,
+        district_code: str | None = None,
+    ) -> dict[str, Any]:
+        """Return archive markets, optionally filtered by a registered geography."""
+        frame = self._filter_geography(
+            self._load_archive(), state_code, district_code
+        )
+        location = self._location_metadata(frame)
         if frame.empty:
             return {
                 "status": "no_data",
-                "district": "Dharashiv",
+                **location,
                 "is_live": False,
                 "markets": [],
-                "message": "The local mandi archive contains no observations.",
+                "message": "No market observations are available for the requested geography.",
             }
 
         markets: list[dict[str, Any]] = []
@@ -371,8 +507,8 @@ class LocalMandiService:
                 {
                     "market_id": _normalise_id(group.iloc[0].get("market_id")) or None,
                     "market": _clean_text(group.iloc[0].get("market")) or "Unknown market",
-                    "district": _clean_text(group.iloc[0].get("district")) or "Dharashiv",
-                    "state": _clean_text(group.iloc[0].get("state")) or "Maharashtra",
+                    "district": _clean_text(group.iloc[0].get("district")) or None,
+                    "state": _clean_text(group.iloc[0].get("state")) or None,
                     "observation_count": int(len(group)),
                     "first_observation_date": (
                         dates.min().strftime("%Y-%m-%d") if not dates.empty else None
@@ -386,14 +522,19 @@ class LocalMandiService:
         markets.sort(key=lambda item: (item["market"] or "").casefold())
         return {
             "status": "ok",
-            "district": "Dharashiv",
+            **location,
             "is_live": False,
             **self._freshness_metadata(frame),
             "market_count": len(markets),
             "markets": markets,
         }
 
-    def get_latest_prices(self, crop: str) -> dict[str, Any]:
+    def get_latest_prices(
+        self,
+        crop: str,
+        state_code: str | None = None,
+        district_code: str | None = None,
+    ) -> dict[str, Any]:
         """Return each market's latest observation for a crop, including NR rows.
 
         The latest observation is selected before checking whether its price is
@@ -401,14 +542,16 @@ class LocalMandiService:
         when a newer observation for that market says NR.
         """
         frame = self._matches_crop(self._load_archive(), crop)
+        frame = self._filter_geography(frame, state_code, district_code)
+        location = self._location_metadata(frame)
         if frame.empty:
             return {
                 "status": "no_observations",
                 "crop": _clean_text(crop),
-                "district": "Dharashiv",
+                **location,
                 "is_live": False,
                 "records": [],
-                "message": f"No archived observations were found for {crop} in Dharashiv.",
+                "message": f"No archived observations were found for {crop} in the requested geography.",
             }
 
         dated = frame.loc[frame["_date"].notna()].copy()
@@ -416,7 +559,7 @@ class LocalMandiService:
             return {
                 "status": "no_valid_dates",
                 "crop": _clean_text(crop),
-                "district": "Dharashiv",
+                **location,
                 "is_live": False,
                 "records": [self._serialise_record(row) for _, row in frame.iterrows()],
                 "message": "Rows exist, but none has a valid observation date.",
@@ -435,7 +578,7 @@ class LocalMandiService:
         return {
             "status": "ok" if numeric_count else "no_numeric_prices",
             "crop": _clean_text(crop),
-            "district": "Dharashiv",
+            **location,
             "is_live": False,
             **self._freshness_metadata(latest),
             "record_count": len(records),
@@ -451,14 +594,22 @@ class LocalMandiService:
             ),
         }
 
-    def get_market_history(self, crop: str, market_id: str | int) -> dict[str, Any]:
+    def get_market_history(
+        self,
+        crop: str,
+        market_id: str | int,
+        state_code: str | None = None,
+        district_code: str | None = None,
+    ) -> dict[str, Any]:
         """Return all archived observations for one crop and one market ID."""
         requested_market_id = _normalise_id(market_id)
         if not requested_market_id:
             raise ValueError("market_id must be a non-empty market identifier.")
 
         frame = self._matches_crop(self._load_archive(), crop)
+        frame = self._filter_geography(frame, state_code, district_code)
         history = frame.loc[frame["_market_id_key"] == requested_market_id].copy()
+        location = self._location_metadata(history)
         history.sort_values(
             ["_date", "variety", "fetched_at_utc"],
             ascending=[True, True, True],
@@ -471,7 +622,7 @@ class LocalMandiService:
         return {
             "status": "ok" if records else "no_observations",
             "crop": _clean_text(crop),
-            "district": "Dharashiv",
+            **location,
             "market_id": requested_market_id,
             "market": (
                 _clean_text(history.iloc[0].get("market")) if not history.empty else None
@@ -488,7 +639,12 @@ class LocalMandiService:
             ),
         }
 
-    def compare_markets(self, crop: str) -> dict[str, Any]:
+    def compare_markets(
+        self,
+        crop: str,
+        state_code: str | None = None,
+        district_code: str | None = None,
+    ) -> dict[str, Any]:
         """Compare latest reported values only across genuinely comparable rows.
 
         Comparisons are grouped by observation date, price unit, price metric,
@@ -497,14 +653,16 @@ class LocalMandiService:
         when that market's newest observation is unreported.
         """
         frame = self._matches_crop(self._load_archive(), crop)
+        frame = self._filter_geography(frame, state_code, district_code)
+        location = self._location_metadata(frame)
         if frame.empty:
             return {
                 "status": "no_observations",
                 "crop": _clean_text(crop),
-                "district": "Dharashiv",
+                **location,
                 "is_live": False,
                 "comparisons": [],
-                "message": f"No archived observations were found for {crop} in Dharashiv.",
+                "message": f"No archived observations were found for {crop} in the requested geography.",
             }
 
         dated = frame.loc[frame["_date"].notna()].copy()
@@ -512,7 +670,7 @@ class LocalMandiService:
             return {
                 "status": "no_valid_dates",
                 "crop": _clean_text(crop),
-                "district": "Dharashiv",
+                **location,
                 "is_live": False,
                 "comparisons": [],
                 "message": "No valid observation dates are available for comparison.",
@@ -528,7 +686,11 @@ class LocalMandiService:
         # metric/variety is retained as its own exact category, never mapped to
         # a named metric/variety.
         comparable = numeric.loc[numeric["_unit_key"] != ""].copy()
-        group_columns = ["_date", "_unit_key", "_metric_key", "_variety_key"]
+        # Keep comparisons inside the same geography to avoid cross-region ranking.
+        group_columns = [
+            "_state_key", "_district_key", "_date",
+            "_unit_key", "_metric_key", "_variety_key",
+        ]
 
         comparisons: list[dict[str, Any]] = []
         for group_key, group in comparable.groupby(group_columns, dropna=False, sort=True):
@@ -549,12 +711,14 @@ class LocalMandiService:
                     if _clean_text(value)
                 }
             )
-            date_value, unit_key, metric_key, variety_key = group_key
+            state_key, district_key, date_value, unit_key, metric_key, variety_key = group_key
 
             # Use original display text from the first row for unit/metric/variety.
             first = group.iloc[0]
             comparisons.append(
                 {
+                    "state": _clean_text(first.get("state")) or None,
+                    "district": _clean_text(first.get("district")) or None,
                     "observation_date": date_value.strftime("%Y-%m-%d"),
                     "price_unit": _clean_text(first.get("price_unit")) or None,
                     "price_metric": _clean_text(first.get("price_metric")) or None,
@@ -578,7 +742,7 @@ class LocalMandiService:
         return {
             "status": status,
             "crop": _clean_text(crop),
-            "district": "Dharashiv",
+            **location,
             "is_live": False,
             **self._freshness_metadata(latest_rows),
             "comparison_count": len(comparisons),
