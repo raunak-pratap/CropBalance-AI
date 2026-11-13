@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import {
@@ -11,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import "./Dashboard.css";
+import { dashboardTranslations } from "../i18n/dashboard";
 
 const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000"
@@ -25,57 +25,62 @@ const CROPS = [
 
 async function fetchJson(path, signal) {
   const response = await fetch(`${API_BASE}${path}`, { signal });
-  const data = await response.json();
+  const data = await response.json().catch(() => null);
 
   if (!response.ok) {
     throw new Error(
-      data.detail || `API request failed (${response.status})`
+      data?.detail || `API request failed (${response.status})`
     );
+  }
+
+  if (!data || typeof data !== "object") {
+    throw new Error("The API returned an invalid response.");
   }
 
   return data;
 }
 
-function formatPrice(value) {
-  if (value === null || value === undefined) return "Not reported";
+function formatPrice(value, notReportedText, language) {
+  if (value === null || value === undefined) {
+    return notReportedText;
+  }
 
-  return new Intl.NumberFormat("en-IN", {
+  const localeByLanguage = {
+    en: "en-IN",
+    hi: "hi-IN",
+    mr: "mr-IN",
+  };
+
+  return new Intl.NumberFormat(localeByLanguage[language] || "en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(value);
 }
 
-function FreshnessNotice({ data }) {
+function FreshnessNotice({ data, t }) {
   if (!data) return null;
 
   const status = data.freshness_status || "unknown";
+  const safeStatus = t.freshnessStatuses[status] ? status : "unknown";
   const age = data.data_age_days;
-  const date = data.last_observation_date || "Unavailable";
-
-  const messages = {
-    fresh: "The archived observations are relatively recent.",
-    aging: "These observations are aging. Check a current market source before making a selling decision.",
-    stale: "These observations are stale. Do not rely on them alone for a current selling decision.",
-    future_dated: "The latest observation has a future date. Verify the archive.",
-    unknown: "The freshness of these observations could not be established.",
-  };
+  const date = data.last_observation_date || t.unavailable;
 
   return (
-    <section className={`freshness-notice freshness-${status}`}>
+    <section className={`freshness-notice freshness-${safeStatus}`}>
       <div>
         <span className="freshness-label">
-          DATA FRESHNESS: {status.replace("_", " ").toUpperCase()}
+          {t.freshnessTitle}: {t.freshnessStatuses[safeStatus]}
         </span>
-        <p>{messages[status] || messages.unknown}</p>
+        <p>{t.freshnessMessages[safeStatus]}</p>
       </div>
 
       <div className="freshness-meta">
         <strong>{date}</strong>
         <span>
           {Number.isInteger(age) && age >= 0
-            ? `${age} day${age === 1 ? "" : "s"} old`
-            : "Age unavailable"}
+            ? t.ageOld(age)
+            : t.ageUnavailable}
         </span>
       </div>
     </section>
@@ -93,6 +98,19 @@ function MetricCard({ label, value, detail }) {
 }
 
 export default function Dashboard() {
+  const [language, setLanguage] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem(
+        "cropbalance-dashboard-language"
+      );
+      return saved && dashboardTranslations[saved] ? saved : "en";
+    } catch {
+      return "en";
+    }
+  });
+
+  const t = dashboardTranslations[language] || dashboardTranslations.en;
+
   const [crop, setCrop] = useState("soybean");
   const [markets, setMarkets] = useState([]);
   const [marketId, setMarketId] = useState("1599");
@@ -107,6 +125,18 @@ export default function Dashboard() {
   const [dataError, setDataError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Remember the user's dashboard language on this browser.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "cropbalance-dashboard-language",
+        language
+      );
+    } catch {
+      // The dashboard remains usable when browser storage is unavailable.
+    }
+  }, [language]);
+
   // Load the list of Dharashiv markets once.
   useEffect(() => {
     const controller = new AbortController();
@@ -117,18 +147,19 @@ export default function Dashboard() {
 
       try {
         const data = await fetchJson("/markets/local", controller.signal);
-        const availableMarkets = data.markets || [];
+        const availableMarkets = Array.isArray(data.markets)
+          ? data.markets
+          : [];
 
         setMarkets(availableMarkets);
-
         setMarketId((current) => {
           const stillAvailable = availableMarkets.some(
-            (market) => market.market_id === current
+            (market) => String(market.market_id) === String(current)
           );
 
           return stillAvailable
             ? current
-            : availableMarkets[0]?.market_id || "";
+            : String(availableMarkets[0]?.market_id || "");
         });
       } catch (error) {
         if (error.name !== "AbortError") {
@@ -142,13 +173,12 @@ export default function Dashboard() {
     }
 
     loadMarkets();
-
     return () => controller.abort();
   }, []);
 
-  // Reload the selected crop and market whenever either changes.
+  // Reload observations whenever the selected crop, market, or refresh key changes.
   useEffect(() => {
-    if (!crop || !marketId) return;
+    if (!crop || !marketId) return undefined;
 
     const controller = new AbortController();
 
@@ -157,21 +187,20 @@ export default function Dashboard() {
       setDataError("");
 
       try {
-        const [latestData, historyData, comparisonData] =
-          await Promise.all([
-            fetchJson(
-              `/mandi/prices/latest?crop=${encodeURIComponent(crop)}`,
-              controller.signal
-            ),
-            fetchJson(
-              `/mandi/prices/history?crop=${encodeURIComponent(crop)}&market_id=${encodeURIComponent(marketId)}`,
-              controller.signal
-            ),
-            fetchJson(
-              `/mandi/prices/compare?crop=${encodeURIComponent(crop)}`,
-              controller.signal
-            ),
-          ]);
+        const [latestData, historyData, comparisonData] = await Promise.all([
+          fetchJson(
+            `/mandi/prices/latest?crop=${encodeURIComponent(crop)}`,
+            controller.signal
+          ),
+          fetchJson(
+            `/mandi/prices/history?crop=${encodeURIComponent(crop)}&market_id=${encodeURIComponent(marketId)}`,
+            controller.signal
+          ),
+          fetchJson(
+            `/mandi/prices/compare?crop=${encodeURIComponent(crop)}`,
+            controller.signal
+          ),
+        ]);
 
         setLatest(latestData);
         setHistory(historyData);
@@ -188,28 +217,26 @@ export default function Dashboard() {
     }
 
     loadDashboard();
-
     return () => controller.abort();
   }, [crop, marketId, refreshKey]);
 
   const selectedMarket = markets.find(
-    (market) => market.market_id === marketId
+    (market) => String(market.market_id) === String(marketId)
   );
 
   const records = latest?.records || [];
   const numericCount = latest?.numeric_price_count ?? 0;
-  const missingCount = latest?.data_quality?.missing_or_invalid_price_count ?? 0;
+  const missingCount =
+    latest?.data_quality?.missing_or_invalid_price_count ?? 0;
+  const comparisonGroups = comparison?.comparisons || [];
 
   const chartData = (history?.records || []).map((record) => ({
     date: record.observation_date,
     reportedPrice:
-      record.reported_price === null
+      record.reported_price === null || record.reported_price === undefined
         ? null
         : Number(record.reported_price),
-    variety: record.variety || "Unspecified",
   }));
-
-  const comparisonGroups = comparison?.comparisons || [];
 
   const freshnessData = latest
     ? {
@@ -226,35 +253,57 @@ export default function Dashboard() {
       <main className="mandi-dashboard">
         <header className="dashboard-heading">
           <div>
-            <p className="dashboard-eyebrow">CROPBALANCE AI / MARKET INTELLIGENCE</p>
-            <h1>Dharashiv Mandi Dashboard</h1>
-            <p className="dashboard-subtitle">
-              Explore archived crop observations, market history and
-              comparable reported values.
-            </p>
+            <p className="dashboard-eyebrow">{t.eyebrow}</p>
+            <h1>{t.title}</h1>
+            <p className="dashboard-subtitle">{t.subtitle}</p>
           </div>
-
-          <span className="archive-tag">ARCHIVED DATA · NOT LIVE</span>
+          <span className="archive-tag">{t.archiveTag}</span>
         </header>
 
         <section className="dashboard-controls">
           <label>
-            Select crop
-            <select value={crop} onChange={(e) => setCrop(e.target.value)}>
+            {t.language}
+          <select
+              value={language}
+              onChange={(e) => {
+                const selectedLanguage = e.target.value;
+
+                setLanguage(selectedLanguage);
+
+                window.localStorage.setItem(
+                  "cropbalance-dashboard-language",
+                  selectedLanguage
+                );
+              }}
+            >
+              <option value="en">English</option>
+              <option value="hi">हिन्दी</option>
+              <option value="mr">मराठी</option>
+            </select>
+          </label>
+
+          <label>
+            {t.crop}
+            <select
+              value={crop}
+              onChange={(event) => setCrop(event.target.value)}
+              aria-label={t.crop}
+            >
               {CROPS.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {t.cropNames[item.value] || item.label}
                 </option>
               ))}
             </select>
           </label>
 
           <label>
-            Select market for history
+            {t.marketForHistory}
             <select
               value={marketId}
-              onChange={(e) => setMarketId(e.target.value)}
+              onChange={(event) => setMarketId(event.target.value)}
               disabled={loadingMarkets || markets.length === 0}
+              aria-label={t.marketForHistory}
             >
               {markets.map((market) => (
                 <option key={market.market_id} value={market.market_id}>
@@ -265,128 +314,144 @@ export default function Dashboard() {
           </label>
 
           <button
+            type="button"
             className="dashboard-refresh"
             onClick={() => setRefreshKey((value) => value + 1)}
-            disabled={loadingData}
+            disabled={loadingData || !marketId}
           >
-            {loadingData ? "Loading..." : "Refresh"}
+            {loadingData ? t.loading : t.refresh}
           </button>
         </section>
 
         {marketError && (
-          <div className="dashboard-error">
-            Could not load markets: {marketError}
+          <div className="dashboard-error" role="alert">
+            {t.loadingMarketsError}: {marketError}
           </div>
         )}
 
         {dataError && (
-          <div className="dashboard-error">
-            Could not load mandi information: {dataError}
+          <div className="dashboard-error" role="alert">
+            {t.loadingDataError}: {dataError}
           </div>
         )}
 
         {loadingData && !latest && (
-          <div className="dashboard-loading">Loading market observations...</div>
+          <div className="dashboard-loading" role="status">
+            {t.loading}
+          </div>
         )}
 
         {latest && (
           <>
-            <FreshnessNotice data={freshnessData} />
+            <FreshnessNotice data={freshnessData} t={t} />
 
             <section className="mandi-metrics">
               <MetricCard
-                label="Markets covered"
+                label={t.marketsCovered}
                 value={markets.length}
-                detail="Dharashiv district"
+                detail={t.district}
               />
               <MetricCard
-                label="Latest observations"
+                label={t.latestObservations}
                 value={latest.record_count ?? records.length}
-                detail="One latest observation per market"
+                detail={t.onePerMarket}
               />
               <MetricCard
-                label="Numeric reported values"
+                label={t.numericValues}
                 value={numericCount}
-                detail="Not independently verified"
+                detail={t.notVerified}
               />
               <MetricCard
-                label="Missing / invalid"
+                label={t.missingInvalid}
                 value={missingCount}
-                detail="NR is not treated as zero"
+                detail={t.nrNotZero}
               />
             </section>
 
             <section className="dashboard-section">
               <div className="section-heading">
                 <div>
-                  <p className="dashboard-eyebrow">MARKET OVERVIEW</p>
-                  <h2>Latest {crop} observations</h2>
+                  <p className="dashboard-eyebrow">{t.marketOverview}</p>
+                  <h2>
+                    {t.latestCropObservations(t.cropNames[crop] || crop)}
+                  </h2>
                 </div>
-                <span>{latest.district || "Dharashiv"}, Maharashtra</span>
+                <span>{latest.district || t.districtLocation}</span>
               </div>
 
               <div className="market-grid">
-                {records.map((record) => (
-                  <article
-                    className={`market-card ${record.market_id === marketId ? "market-card-selected" : ""}`}
-                    key={`${record.market_id}-${record.variety}`}
-                  >
-                    <div className="market-card-top">
-                      <h3>{record.market}</h3>
-                      <span>{record.market_id}</span>
-                    </div>
+                {records.map((record) => {
+                  const unit = (record.price_unit || "").trim();
+                  const usableUnit = unit &&
+                    !["NR", "N.R.", "NA", "N/A"].includes(
+                      unit.toUpperCase()
+                    );
 
-                    <strong className="market-price">
-                      {record.reported_price === null
-                        ? "Not reported"
-                        : formatPrice(record.reported_price)}
-                    </strong>
-
-                    <p>{record.variety || "Unspecified variety"}</p>
-                    <small>
-                        {record.observation_date} · {
-                          record.price_unit &&
-                          !["NR", "N.R.", "NA", "N/A"].includes(
-                            record.price_unit.trim().toUpperCase()
-                          )
-                            ? record.price_unit
-                            : "Unit unavailable"
-                        }
-                    </small>
-
-                    {record.reported_price === null && (
-                      <span className="not-reported-tag">
-                        {record.price_status === "not_reported"
-                          ? "NR"
-                          : "Unavailable"}
-                      </span>
-                    )}
-
-                    <button
-                      className="market-select-link"
-                      onClick={() => setMarketId(record.market_id)}
+                  return (
+                    <article
+                      className={`market-card ${String(record.market_id) === String(marketId) ? "market-card-selected" : ""}`}
+                      key={`${record.market_id}-${record.variety || "unknown"}`}
                     >
-                      View history
-                    </button>
-                  </article>
-                ))}
+                      <div className="market-card-top">
+                        <h3>{record.market}</h3>
+                        <span>{record.market_id}</span>
+                      </div>
+
+                      <strong className="market-price">
+                        {formatPrice(
+                          record.reported_price,
+                          t.notReported,
+                          language
+                        )}
+                      </strong>
+
+                      <p>{record.variety || t.unspecifiedVariety}</p>
+                      <small>
+                        {record.observation_date} · {usableUnit ? unit : t.unitUnavailable}
+                      </small>
+
+                      {record.reported_price === null && (
+                        <span className="not-reported-tag">
+                          {record.price_status === "not_reported"
+                            ? t.nr
+                            : t.unavailable}
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        className="market-select-link"
+                        onClick={() => setMarketId(String(record.market_id))}
+                      >
+                        {t.viewHistory}
+                      </button>
+                    </article>
+                  );
+                })}
               </div>
             </section>
 
             <section className="dashboard-section">
               <div className="section-heading">
                 <div>
-                  <p className="dashboard-eyebrow">HISTORICAL OBSERVATIONS</p>
-                  <h2>{selectedMarket?.market || history?.market || "Selected market"}</h2>
+                  <p className="dashboard-eyebrow">
+                    {t.historicalObservations}
+                  </p>
+                  <h2>
+                    {selectedMarket?.market || history?.market || t.selectedMarket}
+                  </h2>
                 </div>
-                <span>{history?.record_count ?? 0} records</span>
+                <span>{t.records(history?.record_count ?? 0)}</span>
               </div>
 
               <div className="chart-panel">
                 {chartData.some((point) => point.reportedPrice !== null) ? (
                   <ResponsiveContainer width="100%" height={320}>
                     <LineChart data={chartData}>
-                      <CartesianGrid stroke="#263b50" strokeDasharray="4 4" />
+                      <CartesianGrid
+                        stroke="#263b50"
+                        strokeDasharray="4 4"
+                      />
                       <XAxis
                         dataKey="date"
                         stroke="#a8b7c8"
@@ -406,14 +471,18 @@ export default function Dashboard() {
                           color: "#fff",
                         }}
                         formatter={(value) =>
-                          value === null ? ["Not reported", "Reported value"] :
-                            [formatPrice(value), "Reported value"]
+                          value === null || value === undefined
+                            ? [t.notReported, t.chartReportedValue]
+                            : [
+                                formatPrice(value, t.notReported, language),
+                                t.chartReportedValue,
+                              ]
                         }
                       />
                       <Line
                         type="monotone"
                         dataKey="reportedPrice"
-                        name="Reported value"
+                        name={t.chartReportedValue}
                         stroke="#62d39b"
                         strokeWidth={3}
                         dot={{ r: 4, fill: "#62d39b" }}
@@ -422,32 +491,26 @@ export default function Dashboard() {
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="empty-state">
-                    No numeric historical observations are available for this market.
-                  </div>
+                  <div className="empty-state">{t.noNumericHistory}</div>
                 )}
 
-                <p className="chart-caption">
-                  Values are archived AGMARKNET reports. Missing observations
-                  remain missing; the line does not represent a live quote.
-                </p>
+                <p className="chart-caption">{t.chartCaption}</p>
               </div>
             </section>
 
             <section className="dashboard-section">
               <div className="section-heading">
                 <div>
-                  <p className="dashboard-eyebrow">COMPARABLE OBSERVATIONS</p>
-                  <h2>Market comparison</h2>
+                  <p className="dashboard-eyebrow">
+                    {t.comparableObservations}
+                  </p>
+                  <h2>{t.marketComparison}</h2>
                 </div>
-                <span>{comparisonGroups.length} comparison groups</span>
+                <span>{t.comparisonGroups(comparisonGroups.length)}</span>
               </div>
 
               {comparisonGroups.length === 0 ? (
-                <div className="empty-state">
-                  {comparison?.message ||
-                    "There are not enough matching observations to compare markets."}
-                </div>
+                <div className="empty-state">{t.noComparisons}</div>
               ) : (
                 <div className="comparison-grid">
                   {comparisonGroups.map((group) => (
@@ -457,49 +520,56 @@ export default function Dashboard() {
                     >
                       <div className="comparison-card-heading">
                         <div>
-                          <h3>{group.variety || "Unspecified variety"}</h3>
+                          {/* Preserve the original AGMARKNET variety label. */}
+                          <h3>{group.variety || t.unspecifiedVariety}</h3>
                           <span>{group.observation_date}</span>
                         </div>
-                        <span>{group.market_count} markets</span>
+                        <span>{t.markets(group.market_count)}</span>
                       </div>
 
                       <p className="comparison-highest">
-                        {formatPrice(group.highest_reported_value)}
-                        <small>Highest reported value</small>
+                        {formatPrice(
+                          group.highest_reported_value,
+                          t.notReported,
+                          language
+                        )}
+                        <small>{t.highestReported}</small>
                       </p>
 
                       <p className="comparison-winner">
-                        {group.highest_reported_markets.join(", ")}
+                        {(group.highest_reported_markets || []).join(", ")}
                       </p>
 
                       <div className="comparison-list">
-                        {group.records_ranked_high_to_low.map((record) => (
-                          <div
-                            className="comparison-row"
-                            key={record.market_id}
-                          >
-                            <span>{record.market}</span>
-                            <strong>{formatPrice(record.reported_price)}</strong>
-                          </div>
-                        ))}
+                        {(group.records_ranked_high_to_low || []).map(
+                          (record) => (
+                            <div
+                              className="comparison-row"
+                              key={record.market_id}
+                            >
+                              <span>{record.market}</span>
+                              <strong>
+                                {formatPrice(
+                                  record.reported_price,
+                                  t.notReported,
+                                  language
+                                )}
+                              </strong>
+                            </div>
+                          )
+                        )}
                       </div>
                     </article>
                   ))}
                 </div>
               )}
 
-              <p className="dashboard-caveat">
-                A higher reported value does not establish the best place to sell.
-                Confirm today's price, crop grade, quantity, transport costs and
-                market fees before making a selling decision.
-              </p>
+              <p className="dashboard-caveat">{t.dataCaveat}</p>
             </section>
           </>
         )}
 
-        <footer className="dashboard-footer">
-          CropBalance AI · Local Mandi Intelligence · Dharashiv pilot
-        </footer>
+        <footer className="dashboard-footer">{t.footer}</footer>
       </main>
     </>
   );
