@@ -16,7 +16,7 @@ from config import SUPPORTED_CROPS, API_CONFIG, PATH_CONFIG
 from fetcher import MandiPriceFetcher, WeatherFetcher
 from predictor import CropPredictor
 from disease.disease_predictor import DiseasePredictor
-from services.local_mandi_service import LocalMandiService
+from services.mandi_archive_service import MandiArchiveService
 from services.reference_registry import ReferenceRegistry
 
 
@@ -40,7 +40,7 @@ app.add_middleware(
 _cache: Dict[str, dict] = {}
 _predictors: Dict[str, CropPredictor] = {}
 _disease_predictor: DiseasePredictor = None
-_local_mandi_service = LocalMandiService()
+_mandi_archive_service = MandiArchiveService()
 _reference_registry = ReferenceRegistry()
 
 
@@ -274,7 +274,7 @@ def run_local_mandi_query(operation):
 
     except ValueError as exc:
         raise HTTPException(
-            status_code=500,
+            status_code=422,
             detail=str(exc)
         )
 
@@ -294,7 +294,7 @@ def get_local_mandi_markets(
     Return markets in the archive, optionally filtered by registered geography.
     """
     return run_local_mandi_query(
-        lambda: _local_mandi_service.get_markets(
+        lambda: _mandi_archive_service.get_markets(
             state_code=state_code,
             district_code=district_code,
         )
@@ -324,7 +324,7 @@ def get_latest_local_mandi_prices(
         )
 
     return run_local_mandi_query(
-        lambda: _local_mandi_service.get_latest_prices(
+        lambda: _mandi_archive_service.get_latest_prices(
             crop, state_code=state_code, district_code=district_code
         )
     )
@@ -359,7 +359,7 @@ def get_local_mandi_history(
         )
 
     return run_local_mandi_query(
-        lambda: _local_mandi_service.get_market_history(
+        lambda: _mandi_archive_service.get_market_history(
             crop=crop,
             market_id=market_id,
             state_code=state_code,
@@ -391,7 +391,7 @@ def compare_local_mandi_prices(
         )
 
     return run_local_mandi_query(
-        lambda: _local_mandi_service.compare_markets(
+        lambda: _mandi_archive_service.compare_markets(
             crop, state_code=state_code, district_code=district_code
         )
     )
