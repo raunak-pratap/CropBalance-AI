@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "registry": "source_mappings",
+  "note": "External IDs are provider-specific. An AGMARKNET ID must never be interpreted as an LGD, Census, or other provider ID.",
+  "items": [
+    {
+      "entity_type": "crop",
+      "entity_code": "wheat",
+      "source": "agmarknet",
+      "external_id": "1",
+      "verification_status": "project_verified",
+      "evidence": "Existing project AGMARKNET weekly collector commodity master constants."
+    },
+    {
+      "entity_type": "crop",
+      "entity_code": "onion",
+      "source": "agmarknet",
+      "external_id": "23",
+      "verification_status": "project_verified",
+      "evidence": "Existing project AGMARKNET weekly collector commodity master constants."
+    },
+    {
+      "entity_type": "crop",
+      "entity_code": "soybean",
+      "source": "agmarknet",
+      "external_id": "13",
+      "verification_status": "project_verified",
+      "evidence": "Existing project AGMARKNET weekly collector commodity master constants."
+    },
+    {
+      "entity_type": "crop",
+      "entity_code": "tomato",
+      "source": "agmarknet",
+      "external_id": "65",
+      "verification_status": "project_verified",
+      "evidence": "Existing project AGMARKNET weekly collector commodity master constants."
+    },
+    {
+      "entity_type": "state",
+      "entity_code": "maharashtra",
+      "source": "agmarknet",
+      "external_id": "20",
+      "verification_status": "project_verified",
+      "evidence": "Existing project AGMARKNET weekly collector state ID."
+    },
+    {
+      "entity_type": "district",
+      "entity_code": "dharashiv",
+      "source": "agmarknet",
+      "external_id": "347",
+      "verification_status": "project_verified",
+      "evidence": "Existing project AGMARKNET weekly collector district ID; not an LGD district code."
+    },
+    {
+      "entity_type": "market",
+      "entity_code": "apmc_bhoom",
+      "source": "agmarknet",
+      "external_id": "1959",
+      "verification_status": "project_verified",
+      "evidence": "Existing project Dharashiv market master and archive."
+    },
+    {
+      "entity_type": "market",
+      "entity_code": "apmc_dharashiv",
+      "source": "agmarknet",
+      "external_id": "1655",
+      "verification_status": "project_verified",
+      "evidence": "Existing project Dharashiv market master and archive."
+    },
+    {
+      "entity_type": "market",
+      "entity_code": "apmc_kalamb",
+      "source": "agmarknet",
+      "external_id": "1599",
+      "verification_status": "project_verified",
+      "evidence": "Existing project Dharashiv market master and archive."
+    },
+    {
+      "entity_type": "market",
+      "entity_code": "apmc_murum",
+      "source": "agmarknet",
+      "external_id": "1600",
+      "verification_status": "project_verified",
+      "evidence": "Existing project Dharashiv market master and archive."
+    },
+    {
+      "entity_type": "market",
+      "entity_code": "apmc_paranda",
+      "source": "agmarknet",
+      "external_id": "1960",
+      "verification_status": "project_verified",
+      "evidence": "Existing project Dharashiv market master and archive."
+    },
+    {
+      "entity_type": "market",
+      "entity_code": "apmc_tuljapur",
+      "source": "agmarknet",
+      "external_id": "1961",
+      "verification_status": "project_verified",
+      "evidence": "Existing project Dharashiv market master and archive."
+    },
+    {
+      "entity_type": "market",
+      "entity_code": "apmc_umarga",
+      "source": "agmarknet",
+      "external_id": "1962",
+      "verification_status": "project_verified",
+      "evidence": "Existing project Dharashiv market master and archive."
+    },
+    {
+      "entity_type": "market",
+      "entity_code": "apmc_washi",
+      "source": "agmarknet",
+      "external_id": "2053",
+      "verification_status": "project_verified",
+      "evidence": "Existing project Dharashiv market master and archive."
+    }
+  ]
+}
