@@ -1,0 +1,46 @@
+name: AGMARKNET master sync tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/agmarknet_master_catalog.py"
+      - "scripts/sync_agmarknet_master.py"
+      - "tests/test_agmarknet_master_catalog.py"
+      - "main.py"
+      - "docker-compose.yml"
+      - ".github/workflows/agmarknet-master-sync-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/agmarknet_master_catalog.py"
+      - "scripts/sync_agmarknet_master.py"
+      - "tests/test_agmarknet_master_catalog.py"
+      - "main.py"
+      - "docker-compose.yml"
+      - ".github/workflows/agmarknet-master-sync-tests.yml"
+
+jobs:
+  agmarknet-master-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependency
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Compile sync service, CLI and FastAPI module
+        run: |
+          python -m py_compile \
+            services/agmarknet_master_catalog.py \
+            scripts/sync_agmarknet_master.py \
+            main.py
+
+      - name: Test AGMARKNET master normalization and source catalog
+        run: python -m pytest -q tests/test_agmarknet_master_catalog.py
