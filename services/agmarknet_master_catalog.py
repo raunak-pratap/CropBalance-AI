@@ -212,7 +212,6 @@ def build_agmarknet_master_snapshot(
     district_index = {
         item["source_id"]: item for item in normalized["districts"]
     }
-    market_state_ids = {item["source_id"]: item["state_source_id"] for item in normalized["markets"]}
     commodity_ids = {item["source_id"] for item in normalized["commodities"]}
 
     invalid_districts = [
@@ -368,9 +367,19 @@ class AgmarknetMasterCatalog:
                 or payload.get("source") != SOURCE_NAME
                 or payload.get("dimension") != dimension
                 or not isinstance(payload.get("records"), list)
+                or payload.get("record_count") != len(payload.get("records", []))
             ):
                 raise ValueError(
                     f"Invalid AGMARKNET source master file: {path}"
+                )
+            source_ids = [
+                str(item.get("source_id", ""))
+                for item in payload["records"]
+                if isinstance(item, dict)
+            ]
+            if len(source_ids) != len(payload["records"]) or len(set(source_ids)) != len(source_ids):
+                raise ValueError(
+                    f"Duplicate or missing source IDs in AGMARKNET master file: {path}"
                 )
             self._data[dimension] = payload
 
