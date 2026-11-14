@@ -772,7 +772,7 @@ def get_market_price_store() -> MarketPriceStore:
     if _market_price_store is None:
         try:
             _market_price_store = MarketPriceStore.from_env()
-        except (RuntimeError, Exception) as exc:
+        except Exception as exc:
             raise HTTPException(
                 status_code=503,
                 detail="Market-price database is not configured or unavailable.",
