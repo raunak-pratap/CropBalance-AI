@@ -107,3 +107,6 @@ node_modules/
 # Monthly forecasting experiment outputs
 data/external/india-mandi-arrivals/
 data/training/monthly_maharashtra/
+
+# Generated AGMARKNET source-master sync output (reproducible from metadata cache)
+data/reference/source_masters/agmarknet/current/
