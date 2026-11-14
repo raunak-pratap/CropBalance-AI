@@ -67,7 +67,7 @@ def test_normalizer_preserves_one_market_observation_without_aggregation():
         "APMC Kalamb",
         "APMC Tuljapur",
     }
-    assert all(row["observation_date"] == date(2026, 11, 14) for row in []) is True
+    assert {row["observation_date"] for row in result.records} == {date(2026, 11, 14)}
 
 
 def test_normalizer_keeps_variety_and_grade_as_distinct_observation_keys():
