@@ -3,7 +3,7 @@ main.py — FastAPI server for CropBalanceAI
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import List, Dict
 
 import pandas as pd
@@ -19,6 +19,7 @@ from disease.disease_predictor import DiseasePredictor
 from services.mandi_archive_service import MandiArchiveService
 from services.reference_registry import ReferenceRegistry
 from services.agmarknet_master_catalog import AgmarknetMasterCatalog
+from database.market_price_store import MarketPriceStore
 
 
 # =========================================================
@@ -755,3 +756,94 @@ def get_agmarknet_source_varieties(
             limit=limit,
         )
     )
+
+
+# =========================================================
+# Stored Daily Market Price Observations
+# =========================================================
+
+_market_price_store: MarketPriceStore | None = None
+
+
+def get_market_price_store() -> MarketPriceStore:
+    """Return the initialized observation store; never create tables on reads."""
+    global _market_price_store
+
+    if _market_price_store is None:
+        try:
+            _market_price_store = MarketPriceStore.from_env()
+        except (RuntimeError, Exception) as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Market-price database is not configured or unavailable.",
+            ) from exc
+
+    try:
+        if not _market_price_store.table_exists():
+            _market_price_store.dispose()
+            _market_price_store = None
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Daily market-price storage is not initialized. "
+                    "Run scripts/ingest_daily_mandi_prices.py --write."
+                ),
+            )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        if _market_price_store is not None:
+            _market_price_store.dispose()
+            _market_price_store = None
+        raise HTTPException(
+            status_code=503,
+            detail="Could not inspect the market-price observation store.",
+        ) from exc
+
+    return _market_price_store
+
+
+@app.get("/market-prices/coverage", tags=["market_price_observations"])
+def get_market_price_observation_coverage():
+    """Summarize facts actually persisted by CropBalance, not master catalog size."""
+    store = get_market_price_store()
+    try:
+        return store.coverage()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Could not read market-price coverage from PostgreSQL.",
+        ) from exc
+
+
+@app.get("/market-prices/observations", tags=["market_price_observations"])
+def get_market_price_observations(
+    state: str | None = Query(default=None, max_length=120),
+    district: str | None = Query(default=None, max_length=160),
+    market: str | None = Query(default=None, max_length=200),
+    commodity: str | None = Query(default=None, max_length=160),
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    """Read archived individual market observations with provenance."""
+    store = get_market_price_store()
+    try:
+        return store.query_observations(
+            state=state,
+            district=district,
+            market=market,
+            commodity=commodity,
+            start_date=start_date,
+            end_date=end_date,
+            offset=offset,
+            limit=limit,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Could not query stored market-price observations.",
+        ) from exc
