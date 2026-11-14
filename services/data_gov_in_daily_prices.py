@@ -42,7 +42,7 @@ FIELD_ALIASES = {
         "arrivals", "arrival", "arrivalstonnes",
     ),
     "arrival_unit": ("arrivalunit", "arrivalsunit", "unitofarrival"),
-    "source_record_id": ("recordid", "resourceid"),
+    "source_record_id": ("recordid", "id"),
     "source_state_id": ("stateid",),
     "source_district_id": ("districtid",),
     "source_market_id": ("marketid",),
@@ -220,11 +220,11 @@ def normalize_market_price_record(
         "market_id": source_ids["market"],
         "commodity_id": source_ids["commodity"],
         "variety_id": source_ids["variety"],
-        "state": _identity_text(state),
-        "district": _identity_text(district),
-        "market": _identity_text(market),
-        "commodity": _identity_text(commodity),
-        "variety": _identity_text(variety),
+        "state": source_ids["state"] or _identity_text(state),
+        "district": source_ids["district"] or _identity_text(district),
+        "market": source_ids["market"] or _identity_text(market),
+        "commodity": source_ids["commodity"] or _identity_text(commodity),
+        "variety": source_ids["variety"] or _identity_text(variety),
         "grade": _identity_text(grade),
     }
     # Use a true source row ID when provided; otherwise use the natural
@@ -263,7 +263,7 @@ def normalize_market_price_record(
         "source_updated_at": None,
         "raw_record": raw,
     }
-    normalized["payload_hash"] = _hash_payload(normalized)
+    normalized["payload_hash"] = _hash_payload(raw)
     return normalized
 
 

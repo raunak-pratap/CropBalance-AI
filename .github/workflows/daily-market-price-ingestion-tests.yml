@@ -1,0 +1,49 @@
+name: Daily market price ingestion tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/data_gov_in_daily_prices.py"
+      - "database/market_price_store.py"
+      - "scripts/ingest_daily_mandi_prices.py"
+      - "tests/test_daily_market_price_ingestion.py"
+      - "main.py"
+      - "docker-compose.yml"
+      - ".github/workflows/daily-market-price-ingestion-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/data_gov_in_daily_prices.py"
+      - "database/market_price_store.py"
+      - "scripts/ingest_daily_mandi_prices.py"
+      - "tests/test_daily_market_price_ingestion.py"
+      - "main.py"
+      - "docker-compose.yml"
+      - ".github/workflows/daily-market-price-ingestion-tests.yml"
+
+jobs:
+  daily-market-price-ingestion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install focused dependencies
+        run: python -m pip install --upgrade pip pytest requests sqlalchemy
+
+      - name: Compile ingestion, database and API modules
+        run: |
+          python -m py_compile \
+            services/data_gov_in_daily_prices.py \
+            database/market_price_store.py \
+            scripts/ingest_daily_mandi_prices.py \
+            main.py
+
+      - name: Run market price ingestion tests
+        run: python -m pytest -q tests/test_daily_market_price_ingestion.py
