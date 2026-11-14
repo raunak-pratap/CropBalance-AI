@@ -626,10 +626,19 @@ def get_reference_markets(
 # AGMARKNET National Source-Master Catalog
 # =========================================================
 
+_agmarknet_master_catalog: AgmarknetMasterCatalog | None = None
+
+
 def get_agmarknet_master_catalog() -> AgmarknetMasterCatalog:
-    """Load the local synchronized AGMARKNET masters; never fetch on API reads."""
+    """Load the local synchronized AGMARKNET masters once; never fetch on API reads."""
+    global _agmarknet_master_catalog
+
+    if _agmarknet_master_catalog is not None:
+        return _agmarknet_master_catalog
+
     try:
-        return AgmarknetMasterCatalog()
+        _agmarknet_master_catalog = AgmarknetMasterCatalog()
+        return _agmarknet_master_catalog
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=503,
