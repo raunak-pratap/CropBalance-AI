@@ -18,6 +18,7 @@ from predictor import CropPredictor
 from disease.disease_predictor import DiseasePredictor
 from services.mandi_archive_service import MandiArchiveService
 from services.reference_registry import ReferenceRegistry
+from services.agmarknet_master_catalog import AgmarknetMasterCatalog
 
 
 # =========================================================
@@ -619,3 +620,129 @@ def get_reference_markets(
         "count": len(items),
         "items": items,
     }
+
+
+# =========================================================
+# AGMARKNET National Source-Master Catalog
+# =========================================================
+
+def get_agmarknet_master_catalog() -> AgmarknetMasterCatalog:
+    """Load the local synchronized AGMARKNET masters; never fetch on API reads."""
+    try:
+        return AgmarknetMasterCatalog()
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "AGMARKNET source masters have not been synchronized yet. "
+                "Run scripts/sync_agmarknet_master.py --write on the host."
+            ),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+def run_agmarknet_catalog_query(operation):
+    try:
+        return operation()
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@app.get("/source-catalog/agmarknet/coverage", tags=["agmarknet_catalog"])
+def get_agmarknet_source_catalog_coverage():
+    """Show imported source-master counts and synchronization provenance."""
+    catalog = get_agmarknet_master_catalog()
+    return catalog.coverage()
+
+
+@app.get("/source-catalog/agmarknet/states", tags=["agmarknet_catalog"])
+def get_agmarknet_source_states(
+    q: str | None = Query(default=None, max_length=100),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    catalog = get_agmarknet_master_catalog()
+    return run_agmarknet_catalog_query(
+        lambda: catalog.list_records(
+            "states", query=q, offset=offset, limit=limit
+        )
+    )
+
+
+@app.get("/source-catalog/agmarknet/districts", tags=["agmarknet_catalog"])
+def get_agmarknet_source_districts(
+    state_id: str | None = Query(default=None, max_length=30),
+    q: str | None = Query(default=None, max_length=100),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    catalog = get_agmarknet_master_catalog()
+    return run_agmarknet_catalog_query(
+        lambda: catalog.list_records(
+            "districts",
+            state_id=state_id,
+            query=q,
+            offset=offset,
+            limit=limit,
+        )
+    )
+
+
+@app.get("/source-catalog/agmarknet/markets", tags=["agmarknet_catalog"])
+def get_agmarknet_source_markets(
+    state_id: str | None = Query(default=None, max_length=30),
+    district_id: str | None = Query(default=None, max_length=30),
+    q: str | None = Query(default=None, max_length=100),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    catalog = get_agmarknet_master_catalog()
+    return run_agmarknet_catalog_query(
+        lambda: catalog.list_records(
+            "markets",
+            state_id=state_id,
+            district_id=district_id,
+            query=q,
+            offset=offset,
+            limit=limit,
+        )
+    )
+
+
+@app.get("/source-catalog/agmarknet/commodities", tags=["agmarknet_catalog"])
+def get_agmarknet_source_commodities(
+    group_id: str | None = Query(default=None, max_length=30),
+    q: str | None = Query(default=None, max_length=100),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    catalog = get_agmarknet_master_catalog()
+    return run_agmarknet_catalog_query(
+        lambda: catalog.list_records(
+            "commodities",
+            group_id=group_id,
+            query=q,
+            offset=offset,
+            limit=limit,
+        )
+    )
+
+
+@app.get("/source-catalog/agmarknet/varieties", tags=["agmarknet_catalog"])
+def get_agmarknet_source_varieties(
+    commodity_id: str | None = Query(default=None, max_length=30),
+    q: str | None = Query(default=None, max_length=100),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    catalog = get_agmarknet_master_catalog()
+    return run_agmarknet_catalog_query(
+        lambda: catalog.list_records(
+            "varieties",
+            commodity_id=commodity_id,
+            query=q,
+            offset=offset,
+            limit=limit,
+        )
+    )
