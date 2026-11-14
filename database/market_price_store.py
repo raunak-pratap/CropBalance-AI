@@ -124,6 +124,10 @@ class MarketPriceStore:
             checkfirst=True,
         )
 
+    def table_exists(self) -> bool:
+        from sqlalchemy import inspect
+        return inspect(self.engine).has_table("market_price_observations")
+
     @staticmethod
     def _db_record(record: dict[str, Any], now: datetime) -> dict[str, Any]:
         result = {key: record.get(key) for key in INSERT_COLUMNS}
