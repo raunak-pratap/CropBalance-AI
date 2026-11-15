@@ -16,6 +16,7 @@ from database.market_price_store import market_price_observations
 
 
 _TABLE = market_price_observations
+_DUPLICATE_EXAMPLE_LIMIT = 10
 
 
 def _serialize(value: Any) -> Any:
@@ -298,7 +299,7 @@ class NationalMarketPriceQualityAuditor:
                 duplicate_groups.c.row_count.desc(),
                 duplicate_groups.c.observation_date.desc(),
             )
-            .limit(max_gap_examples)
+            .limit(_DUPLICATE_EXAMPLE_LIMIT)
         )
         with self.engine.connect() as connection:
             duplicate_group_count = int(
@@ -363,7 +364,6 @@ class NationalMarketPriceQualityAuditor:
                     absent_days = (observed_date - previous_date).days - 1
                     if absent_days > 0:
                         gap_interval_count += 1
-                        series_has_gap = True
                         current_series_has_gap = True
                         missing_calendar_days += absent_days
                         max_missing_calendar_days = max(
@@ -435,6 +435,7 @@ class NationalMarketPriceQualityAuditor:
                 "Counts describe records stored by CropBalance, not national source completeness.",
                 "Missing values are reported separately from invalid values.",
                 "Arrival quantity is optional when the source does not provide it.",
+                "Source record IDs may be absent in the upstream payload; absence is reported for visibility.",
                 "Duplicate candidates and calendar gaps are reported only; no data is changed.",
             ],
         }
