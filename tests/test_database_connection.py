@@ -11,7 +11,9 @@ def test_agent_import_does_not_require_database_url():
     """Importing the agent remains safe without configured database access."""
     project_root = Path(__file__).resolve().parents[1]
     environment = os.environ.copy()
-    environment.pop("DATABASE_URL", None)
+    # An empty value prevents python-dotenv from loading a developer's
+    # DATABASE_URL from .env inside the child process.
+    environment["DATABASE_URL"] = ""
     environment.pop("TEST_DATABASE_URL", None)
 
     completed = subprocess.run(
