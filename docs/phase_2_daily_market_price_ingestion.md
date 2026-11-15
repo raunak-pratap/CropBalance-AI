@@ -47,6 +47,8 @@ The dataset is described by OGD India as daily wholesale minimum, maximum and mo
 
 ## Setup
 
+The connector uses a maximum page size of 100, bounded retries for transient timeouts/429/5xx responses, and a per-request timeout. A capped sample automatically reduces its requested page size to the cap (for example, `--max-records 50` sends `limit=50`). These defaults reduce unnecessary large responses; retries cannot guarantee availability when the upstream portal is slow.
+
 The API key must be stored in `.env` and must not be committed:
 
 ```dotenv
