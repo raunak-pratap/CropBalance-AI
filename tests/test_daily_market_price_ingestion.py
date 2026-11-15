@@ -2,9 +2,12 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 
 import pytest
+import requests
 from sqlalchemy import create_engine
 
 from database.market_price_store import MarketPriceStore
+import services.data_gov_in_daily_prices as daily_price_module
+
 from services.data_gov_in_daily_prices import (
     DataGovInDailyPriceClient,
     normalize_market_price_record,
@@ -48,6 +51,19 @@ class FakeSession:
     def get(self, url, params, timeout):
         self.calls.append({"url": url, "params": params, "timeout": timeout})
         index = min(len(self.calls) - 1, len(self.pages) - 1)
+        return FakeResponse(self.pages[index])
+
+
+class FlakyTimeoutSession(FakeSession):
+    def __init__(self, pages, failures=1):
+        super().__init__(pages)
+        self.failures = failures
+
+    def get(self, url, params, timeout):
+        self.calls.append({"url": url, "params": params, "timeout": timeout})
+        if len(self.calls) <= self.failures:
+            raise requests.exceptions.ReadTimeout("simulated upstream timeout")
+        index = min(len(self.calls) - self.failures - 1, len(self.pages) - 1)
         return FakeResponse(self.pages[index])
 
 
@@ -241,6 +257,67 @@ def test_client_rejects_page_size_above_api_limit():
     client = DataGovInDailyPriceClient(api_key="test-key", session=FakeSession([]))
     with pytest.raises(ValueError, match="page_size"):
         client.fetch(page_size=1001)
+
+
+def test_client_defaults_to_documented_maximum_page_size():
+    session = FakeSession([{"records": [], "total": "0"}])
+    client = DataGovInDailyPriceClient(api_key="test-key", session=session)
+
+    result = client.fetch()
+
+    assert result.pagination_complete is True
+    assert session.calls[0]["params"]["limit"] == 100
+
+
+def test_max_records_reduces_upstream_page_size():
+    rows = [
+        valid_record(Market=f"Market {index}", Modal_Price=str(7000 + index))
+        for index in range(10)
+    ]
+    session = FakeSession([{"records": rows, "total": "5000"}])
+    client = DataGovInDailyPriceClient(api_key="test-key", session=session)
+
+    result = client.fetch(page_size=100, max_records=10)
+
+    assert len(result.records) == 10
+    assert result.pagination_complete is False
+    assert session.calls[0]["params"]["limit"] == 10
+
+
+def test_client_retries_transient_read_timeout(monkeypatch):
+    monkeypatch.setattr(daily_price_module.time, "sleep", lambda seconds: None)
+    session = FlakyTimeoutSession(
+        [{"records": [valid_record()], "total": "1"}],
+        failures=1,
+    )
+    client = DataGovInDailyPriceClient(
+        api_key="test-key",
+        session=session,
+        max_retries=2,
+        retry_backoff_seconds=0,
+    )
+
+    result = client.fetch(page_size=10)
+
+    assert result.pagination_complete is True
+    assert len(result.records) == 1
+    assert len(session.calls) == 2
+
+
+def test_client_returns_actionable_error_after_timeout_retries(monkeypatch):
+    monkeypatch.setattr(daily_price_module.time, "sleep", lambda seconds: None)
+    session = FlakyTimeoutSession([], failures=5)
+    client = DataGovInDailyPriceClient(
+        api_key="test-key",
+        session=session,
+        max_retries=1,
+        retry_backoff_seconds=0,
+    )
+
+    with pytest.raises(RuntimeError, match="timed out after 2 attempts"):
+        client.fetch(page_size=10)
+
+    assert len(session.calls) == 2
 
 
 def test_store_upsert_is_idempotent_and_updates_corrected_price():
