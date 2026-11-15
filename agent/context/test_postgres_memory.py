@@ -1,8 +1,12 @@
-
+"""PostgreSQL-backed farmer context integration tests."""
+import pytest
 from uuid import uuid4
 
 from agent.context.models import FarmerContext
 from agent.context.postgres_memory import PostgresContextStore
+
+
+pytestmark = pytest.mark.integration
 
 
 def test_farmer_context_can_be_saved_and_retrieved():
@@ -31,7 +35,6 @@ def test_farmer_context_can_be_saved_and_retrieved():
         assert saved.soil_type == "Loamy"
     finally:
         store.delete(farmer_id)
-
 
 
 def test_partial_update_preserves_other_fields():
