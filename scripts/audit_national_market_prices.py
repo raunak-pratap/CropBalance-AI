@@ -7,6 +7,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -14,6 +16,11 @@ from database.market_price_store import create_database_engine  # noqa: E402
 from services.national_market_price_quality_audit import (  # noqa: E402
     NationalMarketPriceQualityAuditor,
 )
+
+
+def load_project_environment() -> None:
+    """Load the repository .env file before resolving DATABASE_URL."""
+    load_dotenv(PROJECT_ROOT / ".env")
 
 
 def parse_iso_date(value: str | None) -> date | None:
@@ -60,6 +67,9 @@ def main() -> int:
         parser.error("--start-date cannot be after --end-date.")
     if not 0 <= args.max_gap_examples <= 100:
         parser.error("--max-gap-examples must be between 0 and 100.")
+
+    # Match the project's other CLI tools: DATABASE_URL may live in .env.
+    load_project_environment()
 
     engine = None
     try:
