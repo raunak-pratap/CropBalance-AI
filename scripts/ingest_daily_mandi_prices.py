@@ -110,13 +110,13 @@ def main() -> int:
             max_records=args.max_records,
         )
     except RuntimeError as exc:
-        print("\\nFETCH FAILED:", str(exc))
+        print("\nFETCH FAILED:", str(exc))
         print("No database write was attempted.")
         return 2
     except requests.exceptions.RequestException as exc:
         status_code = getattr(getattr(exc, "response", None), "status_code", None)
         detail = f"HTTP status {status_code}" if status_code else type(exc).__name__
-        print("\\nFETCH FAILED:", detail)
+        print("\nFETCH FAILED:", detail)
         print(
             "The upstream request failed. Check the OGD API status/key, "
             "then retry with a smaller --page-size or a longer --timeout."
