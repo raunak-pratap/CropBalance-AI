@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -21,8 +22,8 @@ import requests
 RESOURCE_ID = "9ef84268-d588-465a-a308-a864a43d0070"
 RESOURCE_URL = f"https://api.data.gov.in/resource/{RESOURCE_ID}"
 SOURCE_NAME = "data.gov.in"
-DEFAULT_PAGE_SIZE = 1000
-MAX_PAGE_SIZE = 1000
+DEFAULT_PAGE_SIZE = 100
+MAX_PAGE_SIZE = 100
 DEFAULT_MAX_PAGES = 1000
 
 FIELD_ALIASES = {
@@ -315,11 +316,12 @@ class DataGovInDailyPriceClient:
         *,
         base_url: str = RESOURCE_URL,
         session: requests.Session | None = None,
-        timeout: int = 30,
+        timeout: int | tuple[int, int] = (10, 45),
+        max_retries: int = 2,
+        retry_backoff_seconds: float = 1.5,
     ) -> None:
         # Fall back to the environment only when the argument is omitted.
-        # An explicitly supplied empty string must stay empty so callers and
-        # tests can deliberately disable credential lookup.
+        # An explicitly supplied empty string must stay empty.
         self.api_key = (
             os.getenv("DATA_GOV_IN_API_KEY", "").strip()
             if api_key is None
@@ -328,6 +330,71 @@ class DataGovInDailyPriceClient:
         self.base_url = base_url
         self.session = session or requests.Session()
         self.timeout = timeout
+        if max_retries < 0:
+            raise ValueError("max_retries cannot be negative.")
+        if retry_backoff_seconds < 0:
+            raise ValueError("retry_backoff_seconds cannot be negative.")
+        self.max_retries = max_retries
+        self.retry_backoff_seconds = retry_backoff_seconds
+
+    def _get_page(self, params: dict[str, Any]) -> requests.Response:
+        """GET one page with bounded retry for transient network/API failures."""
+        last_error: Exception | None = None
+
+        for attempt in range(self.max_retries + 1):
+            try:
+                response = self.session.get(
+                    self.base_url,
+                    params=params.copy(),
+                    timeout=self.timeout,
+                )
+                status_code = getattr(response, "status_code", None)
+
+                if status_code in {429, 500, 502, 503, 504}:
+                    if attempt >= self.max_retries:
+                        response.raise_for_status()
+                    retry_after = getattr(response, "headers", {}).get(
+                        "Retry-After"
+                    )
+                    try:
+                        delay = float(retry_after) if retry_after else 0.0
+                    except (TypeError, ValueError):
+                        delay = 0.0
+                    delay = max(
+                        delay,
+                        self.retry_backoff_seconds * (2 ** attempt),
+                    )
+                    time.sleep(min(delay, 30.0))
+                    continue
+
+                response.raise_for_status()
+                return response
+
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+                last_error = exc
+                if attempt >= self.max_retries:
+                    break
+                delay = min(
+                    self.retry_backoff_seconds * (2 ** attempt),
+                    30.0,
+                )
+                time.sleep(delay)
+
+            except requests.exceptions.HTTPError:
+                # Authentication, bad filters and other non-transient 4xx
+                # responses should be surfaced immediately, not retried.
+                raise
+
+        if isinstance(last_error, requests.exceptions.Timeout):
+            reason = "timed out"
+        else:
+            reason = "could not connect"
+
+        raise RuntimeError(
+            f"data.gov.in request {reason} after {self.max_retries + 1} "
+            f"attempts. Retry later or use a smaller --page-size. "
+            f"No database write was attempted."
+        ) from last_error
 
     def fetch(
         self,
@@ -347,10 +414,17 @@ class DataGovInDailyPriceClient:
         if max_records is not None and max_records < 1:
             raise ValueError("max_records must be at least 1.")
 
+        # A capped sample should request only the number of rows it needs.
+        effective_page_size = (
+            min(page_size, max_records)
+            if max_records is not None
+            else page_size
+        )
+
         params: dict[str, Any] = {
             "api-key": self.api_key,
             "format": "json",
-            "limit": page_size,
+            "limit": effective_page_size,
             "offset": 0,
         }
         if state:
@@ -364,10 +438,7 @@ class DataGovInDailyPriceClient:
         stop_reason = "unknown"
 
         for _ in range(max_pages):
-            response = self.session.get(
-                self.base_url, params=params.copy(), timeout=self.timeout
-            )
-            response.raise_for_status()
+            response = self._get_page(params)
             try:
                 payload = response.json()
             except (TypeError, ValueError) as exc:
@@ -409,7 +480,7 @@ class DataGovInDailyPriceClient:
             if reported_total is not None and params["offset"] >= reported_total:
                 stop_reason = "reported_total_reached"
                 return FetchResult(records, pages, reported_total, True, stop_reason)
-            if len(payload["records"]) < page_size:
+            if len(payload["records"]) < effective_page_size:
                 stop_reason = "short_page"
                 return FetchResult(records, pages, reported_total, True, stop_reason)
 
