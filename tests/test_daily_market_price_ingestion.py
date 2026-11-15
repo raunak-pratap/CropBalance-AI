@@ -200,6 +200,19 @@ def test_client_refuses_missing_api_key():
         client.fetch()
 
 
+def test_client_uses_environment_key_only_when_argument_is_omitted(monkeypatch):
+    monkeypatch.setenv("DATA_GOV_IN_API_KEY", "environment-key")
+
+    default_client = DataGovInDailyPriceClient(session=FakeSession([]))
+    explicit_empty_client = DataGovInDailyPriceClient(
+        api_key="",
+        session=FakeSession([]),
+    )
+
+    assert default_client.api_key == "environment-key"
+    assert explicit_empty_client.api_key == ""
+
+
 def test_client_rejects_malformed_response_and_missing_records():
     client = DataGovInDailyPriceClient(
         api_key="test-key",

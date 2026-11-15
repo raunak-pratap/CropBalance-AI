@@ -317,7 +317,14 @@ class DataGovInDailyPriceClient:
         session: requests.Session | None = None,
         timeout: int = 30,
     ) -> None:
-        self.api_key = api_key or os.getenv("DATA_GOV_IN_API_KEY", "")
+        # Fall back to the environment only when the argument is omitted.
+        # An explicitly supplied empty string must stay empty so callers and
+        # tests can deliberately disable credential lookup.
+        self.api_key = (
+            os.getenv("DATA_GOV_IN_API_KEY", "").strip()
+            if api_key is None
+            else api_key.strip()
+        )
         self.base_url = base_url
         self.session = session or requests.Session()
         self.timeout = timeout
