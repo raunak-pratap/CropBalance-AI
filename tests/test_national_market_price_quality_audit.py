@@ -95,9 +95,6 @@ def test_audit_reports_coverage_quality_duplicates_and_calendar_gaps(audit_engin
     duplicate_candidate = make_row(
         "row-2",
         observation_date=date(2026, 11, 10),
-        min_price="150",
-        max_price="120",
-        modal_price="130",
     )
     latest = make_row(
         "row-3",
@@ -134,6 +131,7 @@ def test_audit_reports_coverage_quality_duplicates_and_calendar_gaps(audit_engin
     assert report["coverage"]["retrieval_age_hours_at_audit"] == 2.0
 
     quality = report["quality"]
+    assert quality["missing_min_price_rows"] == 0
     assert quality["missing_max_price_rows"] == 1
     assert quality["missing_modal_price_rows"] == 1
     assert quality["rows_with_any_missing_price"] == 1
