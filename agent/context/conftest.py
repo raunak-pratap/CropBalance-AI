@@ -11,7 +11,8 @@ import os
 import pytest
 from sqlalchemy.engine import make_url
 
-from database.connection import dispose_engine
+from database.connection import dispose_engine, get_engine
+from database.models import Base
 
 
 @pytest.fixture(autouse=True)
@@ -59,6 +60,9 @@ def isolated_postgres_test_database(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("DATABASE_URL", test_database_url)
     dispose_engine()
     try:
+        # Create mapped tables only in the validated, isolated test database.
+        # This is additive: tests never drop tables or reset the database.
+        Base.metadata.create_all(bind=get_engine())
         yield
     finally:
         dispose_engine()
