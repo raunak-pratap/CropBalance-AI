@@ -69,7 +69,10 @@ python scripts/ingest_daily_mandi_prices.py
 python scripts/ingest_daily_mandi_prices.py \
   --state Maharashtra \
   --commodity Soyabean \
-  --max-records 100
+  --page-size 50 \
+  --max-records 50 \
+  --timeout 60 \
+  --retries 3
 
 # 2. Once the summary and rejected rows have been reviewed, run a complete write.
 python scripts/ingest_daily_mandi_prices.py --write
