@@ -1,9 +1,13 @@
-
+"""PostgreSQL-backed agent integration tests."""
+import pytest
 from uuid import uuid4
 
 from agent.agent import CropBalanceAgent
 from agent.context.models import FarmerContext
 from agent.context.postgres_memory import PostgresContextStore
+
+
+pytestmark = pytest.mark.integration
 
 
 def test_agent_uses_saved_farmer_context():
