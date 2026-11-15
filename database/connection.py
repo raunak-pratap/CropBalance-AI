@@ -7,6 +7,7 @@ SessionLocal() is first used.
 from __future__ import annotations
 
 import os
+from threading import RLock
 from typing import Any
 
 from sqlalchemy import create_engine
@@ -17,6 +18,7 @@ from sqlalchemy.orm import Session, sessionmaker
 _engine: Engine | None = None
 _engine_url: str | None = None
 _session_factory: sessionmaker[Session] | None = None
+_engine_lock = RLock()
 
 
 def get_engine(database_url: str | None = None) -> Engine:
@@ -34,21 +36,22 @@ def get_engine(database_url: str | None = None) -> Engine:
             "DATABASE_URL is not set. Configure it before performing database operations."
         )
 
-    if _engine is None or _engine_url != configured_url:
-        dispose_engine()
-        _engine = create_engine(
-            configured_url,
-            pool_pre_ping=True,
-            future=True,
-        )
-        _engine_url = configured_url
-        _session_factory = sessionmaker(
-            bind=_engine,
-            autoflush=False,
-            autocommit=False,
-        )
+    with _engine_lock:
+        if _engine is None or _engine_url != configured_url:
+            dispose_engine()
+            _engine = create_engine(
+                configured_url,
+                pool_pre_ping=True,
+                future=True,
+            )
+            _engine_url = configured_url
+            _session_factory = sessionmaker(
+                bind=_engine,
+                autoflush=False,
+                autocommit=False,
+            )
 
-    return _engine
+        return _engine
 
 
 def get_session_factory() -> sessionmaker[Session]:
@@ -70,9 +73,10 @@ def dispose_engine() -> None:
     """
     global _engine, _engine_url, _session_factory
 
-    if _engine is not None:
-        _engine.dispose()
+    with _engine_lock:
+        if _engine is not None:
+            _engine.dispose()
 
-    _engine = None
-    _engine_url = None
-    _session_factory = None
+        _engine = None
+        _engine_url = None
+        _session_factory = None
