@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import argparse
 import sys
+
+import requests
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -40,7 +42,10 @@ def main() -> int:
     parser.add_argument("--commodity", help="Optional exact OGD commodity filter.")
     parser.add_argument("--start-date", type=parse_iso_date, help="Keep observations on/after YYYY-MM-DD.")
     parser.add_argument("--end-date", type=parse_iso_date, help="Keep observations on/before YYYY-MM-DD.")
-    parser.add_argument("--page-size", type=int, default=1000)
+    parser.add_argument("--page-size", type=int, default=100)
+    parser.add_argument("--timeout", type=int, default=45, help="Per-request timeout in seconds.")
+    parser.add_argument("--retries", type=int, default=2, help="Retries for timeouts and temporary 429/5xx responses.")
+    parser.add_argument("--retry-backoff", type=float, default=1.5, help="Initial exponential retry backoff in seconds.")
     parser.add_argument("--max-pages", type=int, default=1000)
     parser.add_argument("--max-records", type=int, help="Optional cap for a deliberately partial run.")
     parser.add_argument(
@@ -65,9 +70,19 @@ def main() -> int:
             "Otherwise remove --max-records for a complete paginated run."
         )
 
+    if args.timeout < 1:
+        parser.error("--timeout must be at least 1 second.")
+    if args.retries < 0:
+        parser.error("--retries cannot be negative.")
+    if args.retry_backoff < 0:
+        parser.error("--retry-backoff cannot be negative.")
+
     client = DataGovInDailyPriceClient(
         api_key=API_CONFIG.data_gov_in_api_key,
         base_url=API_CONFIG.data_gov_in_base_url,
+        timeout=args.timeout,
+        max_retries=args.retries,
+        retry_backoff_seconds=args.retry_backoff,
     )
     retrieved_at = datetime.now(timezone.utc)
 
@@ -76,15 +91,38 @@ def main() -> int:
     print("State filter:", args.state or "All available states")
     print("Commodity filter:", args.commodity or "All available commodities")
     print("Mode:", "WRITE" if args.write else "DRY RUN")
-    print("Page size:", args.page_size)
-
-    fetched = client.fetch(
-        state=args.state,
-        commodity=args.commodity,
-        page_size=args.page_size,
-        max_pages=args.max_pages,
-        max_records=args.max_records,
+    effective_page_size = (
+        min(args.page_size, args.max_records)
+        if args.max_records is not None
+        else args.page_size
     )
+    print("Requested page size:", args.page_size)
+    print("Effective page size:", effective_page_size)
+    print("Request timeout (seconds):", args.timeout)
+    print("Retries after initial attempt:", args.retries)
+
+    try:
+        fetched = client.fetch(
+            state=args.state,
+            commodity=args.commodity,
+            page_size=args.page_size,
+            max_pages=args.max_pages,
+            max_records=args.max_records,
+        )
+    except RuntimeError as exc:
+        print("\\nFETCH FAILED:", str(exc))
+        print("No database write was attempted.")
+        return 2
+    except requests.exceptions.RequestException as exc:
+        status_code = getattr(getattr(exc, "response", None), "status_code", None)
+        detail = f"HTTP status {status_code}" if status_code else type(exc).__name__
+        print("\\nFETCH FAILED:", detail)
+        print(
+            "The upstream request failed. Check the OGD API status/key, "
+            "then retry with a smaller --page-size or a longer --timeout."
+        )
+        print("No database write was attempted.")
+        return 2
     normalized = normalize_market_price_records(
         fetched.records,
         retrieved_at=retrieved_at,
