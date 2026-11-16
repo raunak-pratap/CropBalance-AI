@@ -18,6 +18,7 @@ from predictor import CropPredictor
 from disease.disease_predictor import DiseasePredictor
 from services.mandi_archive_service import MandiArchiveService
 from services.reference_registry import ReferenceRegistry
+from services.crop_readiness_service import CropReadinessService
 from services.agmarknet_master_catalog import AgmarknetMasterCatalog
 from database.market_price_store import MarketPriceStore
 
@@ -44,6 +45,9 @@ _predictors: Dict[str, CropPredictor] = {}
 _disease_predictor: DiseasePredictor = None
 _mandi_archive_service = MandiArchiveService()
 _reference_registry = ReferenceRegistry()
+_crop_readiness_service = CropReadinessService(
+    reference_registry=_reference_registry
+)
 
 
 # =========================================================
@@ -621,6 +625,20 @@ def get_reference_markets(
         "count": len(items),
         "items": items,
     }
+
+
+@app.get("/catalog/readiness", tags=["reference_catalog"])
+def get_crop_data_readiness(
+    crop: str | None = Query(
+        default=None,
+        max_length=100,
+        description="Optional crop name, alias or internal crop code",
+    ),
+):
+    """Report catalog, source-map, observation and model readiness separately."""
+    return run_reference_query(
+        lambda: _crop_readiness_service.report(crop=crop)
+    )
 
 
 # =========================================================
