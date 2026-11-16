@@ -1,0 +1,19 @@
+{
+    "schema_version": 1,
+    "documents": [
+      {
+        "document_id": "icar_nsri_soybean_2026",
+        "title": "Soybean: Improved Varieties, Cultivation Practices and Agronomic Operations, Pest and Disease Management, and Technical Recommendations",
+        "publisher": "ICAR-National Soybean Research Institute",
+        "publication_year": 2026,
+        "document_type": "technical_bulletin",
+        "crop_codes": ["soybean"],
+        "region_scope": ["India"],
+        "source_url": "https://icar-nsri.res.in/pdfdoc/TechnicalBulletin14-04-26.pdf",
+        "landing_page": "https://icar-nsri.res.in/extensionbullet.html",
+        "local_filename": "icar_nsri_soybean_2026.pdf",
+        "language_status": "pending_review",
+        "approval_status": "pending_review"
+      }
+    ]
+  }
